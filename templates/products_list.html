@@ -1,0 +1,78 @@
+<html>
+<head>
+    <title>Цены на товары</title>
+    {% load static %}
+    <link href="{% static 'css/styles.css' %}" type="text/css" rel="stylesheet">
+</head>
+<style>
+    .body_form {
+        display: flex;
+        flex-direction: column;
+    }
+    .main_prices {
+        background-color: bisque;
+        display: flex;
+        flex-direction: column;
+        border-bottom: 2px gray solid;
+    }
+    .set_buttons button{
+        float: right;
+        border: 1px solid #5d7cff;
+        border-radius: 10px;
+        background-color: #2249f2;
+        color: white;
+        font-size: 14px;
+        margin-top: 10px;
+        margin-right: 10px;
+        width: 100px;
+        height: 40px;
+    }
+    .prices_row {
+        margin-top: 4px;
+        margin-bottom: 4px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+    .prices_block {
+        width: 33%;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+    }
+</style>
+<body>
+<form action="{% url 'change_price' %}" method="post" class="body_form">
+        <div class="set_buttons">
+            <button type="button" onclick="location.href = '{%  url 'index' %}';">На главную</button>
+            <button type="button" onclick="location.href = '{% url 'get_data' %}'">Перезагрузить данные</button>
+            <button type="submit">Обновить цены</button>
+            <button type="button" onclick="stop_data()">Остановить прогрузку???</button>
+        </div>
+        <div class="main_prices" id="table">
+            <div class="prices_row" style="border: 2px solid black">
+                <div class="prices_block"><h3>Название</h3></div>
+                <div class="prices_block"><H3>Старая цена</H3></div>
+                <div class="prices_block"><h3>Новая цена</h3></div>
+            </div>
+            {% for product in products %}
+            <div class="prices_row">
+                <div class="prices_block"><h3>{{ product.name }}</h3></div>
+                <div class='prices_block'><label for='new{{ product.offer_id }}'>{{ product.price }}</label></div>
+                <div class='prices_block'>
+                    <input type='hidden' name='old{{ product.offer_id }}' value='{{ product.price }}'>
+                    <label>
+                        <input type='number' name='new{{ product.offer_id }}' value='{{ product.price }}'>
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Контроль цен</title>
+</head>
+<body>
+<h3>Ожидайте</h3>
+<script>
+    function checkStatus() {
+        fetch('script.php?type=1')
+            .then(response => response.json())
+            .then(data => {
+                console.log("OK");
+                if (data.ready) {
+                    window.location.href = "price_changer.php";
+                } else {
+                    setTimeout(checkStatus, 1000);
+                }
+            });
+
+    }
+    async function start() {
+        window.location.href="initiate_db.php";
+        //fetch('initiate_db.php').then(response => console.log(response));
+            /*
+            .then(data => {
+            console.log(data.code);
+            if (data.code === 'ok') {
+                window.location.href = "price_changer.php?auto_mode=true";
+            }
+            else {
+                document.body.innerHTML += `<h3 style="color:red">Произошла ошибка</h3>
+<p>${data.message}</p>
+<button onclick="window.location.href = 'index.php'">Вернуться</button>`
+            }
+        });*/
+    }
+
+    // Запуск проверки после загрузки страницы
+    window.onload = start;
+</script>
+</body>
+</html>
