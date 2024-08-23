@@ -36,6 +36,7 @@ SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)
 DEBUG = True
 
 ALLOWED_HOSTS = ["repriser-xreronxi.amvera.io", "*"]
+CSRF_TRUSTED_ORIGINS = ["repriser-xreronxi.amvera.io"]
 
 # Application definition
 
