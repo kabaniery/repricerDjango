@@ -148,3 +148,21 @@ def load_from_ozon(request):
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
+
+
+def example(request):
+    from selenium import webdriver
+    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.chrome.options import Options
+
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get("https://www.python.org")
+    print(driver.title)
+
+    driver.close()
+    return HttpResponse(status=200, content=driver.title)

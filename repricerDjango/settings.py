@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'repricerDjango.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR.parent.joinpath("data") / 'db.sqlite',
+        'NAME': BASE_DIR.parent.joinpath("data") / 'db.sqlite3',
     }
 }
 
