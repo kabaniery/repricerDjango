@@ -165,4 +165,4 @@ def example(request):
     print(driver.title)
 
     driver.close()
-    return HttpResponse(status=200, content=driver.title)
+    return redirect('/login')
