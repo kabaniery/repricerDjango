@@ -26,6 +26,7 @@ def register_view(request):
         api_key = request.POST['password']
         shop_url = request.POST['shop_url']
         result = get_shop_infos(client_id, api_key, shop_url)
+        print(result)
         if result['status']:
             new_password = make_password(api_key)
             new_client = Client(username=client_id, password=new_password, shop_address=shop_url,
