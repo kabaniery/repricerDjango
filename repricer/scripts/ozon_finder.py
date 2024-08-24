@@ -41,6 +41,7 @@ def get_driver():
 def get_code(driver: webdriver.Chrome, site):
     driver.get(site)
     time.sleep(2)
+    print(driver.page_source)
     with open("temp.txt", "a") as a:
         a.write(driver.page_source)
         a.write("\n\n")
