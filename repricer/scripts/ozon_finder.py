@@ -21,12 +21,10 @@ def get_driver():
     chrome_options = Options()
     #chrome_options.add_argument("--headless")
     #chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument('--headless')
+    #chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
-    '''
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
@@ -35,7 +33,7 @@ def get_driver():
         "Chrome/91.0.4472.124 Safari/537.36")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
-    '''
+
     current_driver = webdriver.Chrome( options=chrome_options)
     return current_driver
 
@@ -69,6 +67,7 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
         result['status'] = False
         result['message'] = e
     print("res", result)
+    time.sleep(10)
     current_driver.close()
 
 
