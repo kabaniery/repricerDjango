@@ -16,6 +16,7 @@ from pathlib import Path
 from django.utils.deprecation import MiddlewareMixin
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
@@ -87,8 +88,15 @@ WSGI_APPLICATION = 'repricerDjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  #asd
+        'ENGINE': 'django.db.backends.mysql',  # Используемый движок базы данных
+        'NAME': 'u2798090_repricerBd',       # Имя базы данных
+        'USER': 'repricer',            # Имя пользователя для подключения
+        'PASSWORD': 'TbeEED4MLs8MyQh',              # Пароль для подключения
+        'HOST': 'localhost',                   # Хост базы данных, по умолчанию localhost
+        'PORT': '3306',                        # Порт базы данных, по умолчанию 3306
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 temp = "dasdas"
