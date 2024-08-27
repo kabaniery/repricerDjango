@@ -7,3 +7,7 @@ adb/*
 adb
 data/*
 /adb/
+repricer/__pycache__/
+repricer/middleware/__pycache__/
+repricer/scripts/__pycache__/
+repricerDjango/__pycache__/
