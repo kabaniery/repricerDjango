@@ -13,7 +13,7 @@ from django.core.wsgi import get_wsgi_application
 import os, sys
 sys.path.insert(0, '/var/www/u2708090/data/repricerDjango')
 sys.path.insert(1, '/var/www/u2708090/data/repricerVenv/lib/python3.10/site-packages')
-os.environ['DJANGO_SETTINGS_MODULE'] = 'project_name.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'repricerDjango.settings'
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
 
