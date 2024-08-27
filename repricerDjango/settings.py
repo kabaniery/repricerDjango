@@ -90,7 +90,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # Используемый движок базы данных
         'NAME': 'u2798090_repricerBd',       # Имя базы данных
-        'USER': 'repricer',            # Имя пользователя для подключения
+        'USER': 'u2798090_reprice',            # Имя пользователя для подключения
         'PASSWORD': 'TbeEED4MLs8MyQh',              # Пароль для подключения
         'HOST': 'localhost',                   # Хост базы данных, по умолчанию localhost
         'PORT': '3306',                        # Порт базы данных, по умолчанию 3306
