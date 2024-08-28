@@ -21,7 +21,7 @@ def get_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
-    #chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument("--remote-debugging-port=9222")
@@ -34,17 +34,14 @@ def get_driver():
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    current_driver = webdriver.Chrome( options=chrome_options)
+    current_driver = webdriver.Chrome(options=chrome_options)
     return current_driver
 
 
+# ВОЗВРАЩАЕТ ДАННЫЕ В UTF-8
 def get_code(driver: webdriver.Chrome, site):
     driver.get(site)
-    time.sleep(5)
-    print(driver.page_source)
-    with open("temp.txt", "a") as a:
-        a.write(driver.page_source)
-        a.write("\n\n")
+    time.sleep(2)
     return driver.page_source
 
 
@@ -55,7 +52,6 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
                                      "1]/div[1]/div[1]")[0]
         image_object = parental_object.xpath("./div[1]/div[1]")[0]
         style_value = image_object.get('style')
-        print(style_value)
         background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
         shop_name = parental_object.xpath("./div[2]/div[1]/span[1]")[0].text
         response = requests.get(background_url)
@@ -70,8 +66,6 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
         print(e)
         result['status'] = False
         result['message'] = e
-    print("res", result)
-    time.sleep(10)
     current_driver.close()
 
 
@@ -90,30 +84,10 @@ def get_shop_infos(client_id, api_key, shop_url):
     }
     response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
     url_thread.join()
-    print(result)
     if response.status_code == 200:
         if result['status']:
             return result
     return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
-
-
-if __name__ == '__main__':
-    args = argparse.ArgumentParser().parse_args()
-    get_shop_infos("1590790", "f8d5188f-cbcc-4378-b23f-9278b4489ff1",
-                   "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790")
-    '''parser = argparse.ArgumentParser()
-    parser.add_argument("--site")
-    parser.add_argument("--products-finder")
-    args = parser.parse_args()
-
-    main_driver = getDriver()
-    with open("additional/temp_data.txt", "w") as f:
-        pass
-    if args.products_finder == '1':
-        money_parser(main_driver)
-    else:
-        get_shop_info(main_driver)
-    main_driver.quit()'''
 
 
 class SeleniumProcess(threading.Thread):
@@ -194,10 +168,8 @@ class SeleniumProcess(threading.Thread):
                 if len(link) == 0:
                     # TODO: прописать лог
                     continue
-                print(link[0].get("href"), end=" ")
                 queues[encounter % 3].put("https://www.ozon.ru" + link[0].get("href"))
                 encounter += 1
-            print()
         driver.close()
         for thread in threads:
             thread.join()
