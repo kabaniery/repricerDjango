@@ -11,4 +11,4 @@ WORKDIR /app
 COPY . /app
 
 RUN python -m pip install -r requirements.txt
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:80"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 127.0.0.1:8000"]
