@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 
 from repricer.models import Client, Product
 from repricer.forms import LoginForm, RegisterForm
-from repricer.scripts.ozon_finder import get_shop_infos
+from repricer.scripts.ozon_finder import get_shop_infos, get_driver, get_code
 from repricer.scripts.web_manager import WebManager
 
 
@@ -152,18 +152,8 @@ def load_from_ozon(request):
 
 # TODO: убрать
 def example(request):
-    from selenium import webdriver
-    from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.chrome.options import Options
-
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-
-    driver = webdriver.Chrome(options=chrome_options)
-    driver.get("https://www.python.org")
-    print(driver.title)
-
-    driver.close()
+    page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
+    driver = get_driver()
+    with open("file.html", "w") as file:
+        file.write(get_code(driver, page_href))
     return redirect('/login')
