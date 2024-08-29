@@ -156,4 +156,5 @@ def example(request):
     driver = get_driver()
     with open("file.html", "w") as file:
         file.write(get_code(driver, page_href))
+    driver.close()
     return redirect('/login')
