@@ -18,7 +18,8 @@ import repricer.models
 
 
 def get_driver():
-    chrome_options = Options()
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--enable-javascript")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     # chrome_options.add_argument('--headless')
