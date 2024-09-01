@@ -154,7 +154,6 @@ def load_from_ozon(request):
 def example(request):
     page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
     driver = get_driver()
-    with open("file.html", "w") as file:
-        file.write(get_code(driver, page_href))
+    code = get_code(driver, page_href)
     driver.close()
-    return redirect('/login')
+    return HttpResponse(code)
