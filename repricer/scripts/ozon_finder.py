@@ -33,8 +33,8 @@ def get_driver():
         "Chrome/91.0.4472.124 Safari/537.36")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
-
-    current_driver = webdriver.Chrome(options=chrome_options)
+    service = Service('/usr/bin/chromedriver')
+    current_driver = webdriver.Chrome(service=service, options=chrome_options)
     return current_driver
 
 
