@@ -161,6 +161,6 @@ def example(request):
         temp.write(driver.title)
     elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div")
     elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
-    print(len(elem))
+    print(elem[1].get_attribute("class"))
     driver.close()
     return HttpResponse(code)
