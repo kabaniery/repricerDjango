@@ -160,6 +160,7 @@ def example(request):
     with open("block_name", "w") as temp:
         temp.write(driver.title)
     elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div")
-    print(elem.text)
+    elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
+    print(len(elem))
     driver.close()
     return HttpResponse(code)
