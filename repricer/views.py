@@ -160,7 +160,7 @@ def example(request):
     #parser = etree.HTMLParser(code)
     if driver.title.encode("utf-8").decode("utf-8") == "Доступ ограничен":
         print("correct")
-    driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[1].find_element(By.TAG_NAME, "button").click()
+    #driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[1].find_element(By.TAG_NAME, "button").click()
     #root = parser.xpath("/html/body/div[1]/div[1]/div[1]/div[2]/button")
     driver.close()
     return HttpResponse(code)
