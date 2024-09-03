@@ -155,5 +155,5 @@ def example(request):
     page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
     driver = get_driver()
     code = get_code(driver, page_href)
-    driver.close()
+   #driver.close()
     return HttpResponse(code)
