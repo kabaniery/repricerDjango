@@ -10,6 +10,8 @@ from repricer.models import Client, Product
 from repricer.forms import LoginForm, RegisterForm
 from repricer.scripts.ozon_finder import get_shop_infos, get_driver, get_code
 from repricer.scripts.web_manager import WebManager
+from lxml import etree
+from selenium.webdriver.common.by import By
 
 
 # Create your views here.
@@ -155,5 +157,10 @@ def example(request):
     page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
     driver = get_driver()
     code = get_code(driver, page_href)
+    parser = etree.HTMLParser(code)
+    if driver.title.encode("utf-8").decode("utf-8") == "Доступ ограничен":
+        print("correct")
+    driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[1].find_element(By.TAG_NAME, "button").click()
+    #root = parser.xpath("/html/body/div[1]/div[1]/div[1]/div[2]/button")
     driver.close()
     return HttpResponse(code)
