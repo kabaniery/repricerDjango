@@ -17,11 +17,23 @@ from selenium.webdriver.common.by import By
 import repricer.models
 
 
+def check_block(driver: webdriver.Chrome):
+    with open("block_name", "r") as title_file:
+        if title_file.readline() == driver.title:
+            elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME,
+                                                                                                           "div").find_element(
+                By.TAG_NAME, "div")
+            elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
+            elem[2].find_element(By.TAG_NAME, "button").click()
+            return driver.page_source
+        return None
+
+
 def get_driver():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--enable-javascript")
-    #chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--disable-gpu")
+    # chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument("--remote-debugging-port=9222")
@@ -42,6 +54,9 @@ def get_driver():
 def get_code(driver: webdriver.Chrome, site):
     driver.get(site)
     time.sleep(2)
+    res = check_block(driver)
+    if res is not None:
+        return res
     return driver.page_source
 
 
