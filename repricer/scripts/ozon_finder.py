@@ -25,7 +25,7 @@ def check_block(driver: webdriver.Chrome):
                 By.TAG_NAME, "div")
             elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
             elem[2].find_element(By.TAG_NAME, "button").click()
-            time.sleep(1)
+            time.sleep(2)
             return driver.page_source
         return None
 
@@ -54,7 +54,7 @@ def get_driver():
 # ВОЗВРАЩАЕТ ДАННЫЕ В UTF-8
 def get_code(driver: webdriver.Chrome, site):
     driver.get(site)
-    time.sleep(1)
+    time.sleep(2)
     res = check_block(driver)
     if res is not None:
         return res
