@@ -157,11 +157,5 @@ def example(request):
     page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
     driver = get_driver()
     code = get_code(driver, page_href)
-    with open("block_name", "w") as temp:
-        temp.write(driver.title)
-    elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME, "div").find_element(By.TAG_NAME, "div")
-    elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
-    elem[2].find_element(By.TAG_NAME, "button").click()
-    print(elem[2].get_attribute("class"))
     driver.close()
     return HttpResponse(code)
