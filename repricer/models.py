@@ -9,6 +9,7 @@ class Client(AbstractUser):
     shop_address = models.CharField(max_length=50)
     shop_avatar = models.ImageField(upload_to='avatars/')
     product_blocked = models.BooleanField(default=False)
+    api_key = models.CharField(max_length=50)
 
 
 class Product(models.Model):

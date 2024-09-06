@@ -5,6 +5,10 @@
     <title>{{ form_type }}</title>
 </head>
 <body>
+<header>
+    <a href="{% url 'register' %}">Регистрация</a>
+    <a href="{% url 'login' %}">Вход</a>
+</header>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

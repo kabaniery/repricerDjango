@@ -8,8 +8,10 @@ from django.shortcuts import render, redirect
 
 from repricer.models import Client, Product
 from repricer.forms import LoginForm, RegisterForm
-from repricer.scripts.ozon_finder import get_shop_infos
+from repricer.scripts.ozon_finder import get_shop_infos, get_driver, get_code
 from repricer.scripts.web_manager import WebManager
+from lxml import etree
+from selenium.webdriver.common.by import By
 
 
 # Create your views here.
@@ -26,11 +28,10 @@ def register_view(request):
         api_key = request.POST['password']
         shop_url = request.POST['shop_url']
         result = get_shop_infos(client_id, api_key, shop_url)
-        print(result)
         if result['status']:
             new_password = make_password(api_key)
             new_client = Client(username=client_id, password=new_password, shop_address=shop_url,
-                                shop_name=result['shop_name'])
+                                shop_name=result['shop_name'], api_key=api_key)
             new_client.save()
             new_client.shop_avatar.save(result['avatar_name'], result['avatar_path'])
             login(request, new_client)
@@ -68,7 +69,7 @@ def login_view(request):
 def get_data(request):
     client = request.user
     assert isinstance(client, Client)
-    if not client.product_blocked:
+    if True:
         ready_products = Product.objects.filter(shop=client)
         return render(request, "products_list.html", {'products': ready_products})
     else:
@@ -98,7 +99,7 @@ def change_price(request):
         else:
             headers = {
                 'Client-Id': client.username,
-                'Api-Key': client.password
+                'Api-Key': client.api_key
             }
             data = {
                 'filter': {
@@ -142,7 +143,7 @@ def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
 
-    if not client.product_blocked:
+    if True:
         client.product_blocked = True
         client.save()
         WebManager.add_to_queue(client)
@@ -151,19 +152,10 @@ def load_from_ozon(request):
         return HttpResponse("You are already added", status=400)
 
 
+# TODO: убрать
 def example(request):
-    from selenium import webdriver
-    from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.chrome.options import Options
-
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-
-    driver = webdriver.Chrome(options=chrome_options)
-    driver.get("https://www.python.org")
-    print(driver.title)
-
+    page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
+    driver = get_driver()
+    code = get_code(driver, page_href)
     driver.close()
-    return redirect('/login')
+    return HttpResponse(code)

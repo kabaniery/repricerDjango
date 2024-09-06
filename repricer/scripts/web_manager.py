@@ -1,5 +1,6 @@
 import threading
 import time
+from os import path
 from queue import Queue
 
 import requests
@@ -28,15 +29,15 @@ class WebManager(threading.Thread):
 
         Product.objects.filter(shop=client).delete()
 
-        # запуск процесса
+        # Р·Р°РїСѓСЃРє РїСЂРѕС†РµСЃСЃР°
         stop = False
         proc = SeleniumProcess(client, stop)
         proc.start()
 
-        # Поиск всех данных из API
+        # РџРѕРёСЃРє РІСЃРµС… РґР°РЅРЅС‹С… РёР· API
         header = {
             'Client-Id': client.username,
-            'Api-Key': client.password
+            'Api-Key': client.api_key
         }
         body = {
             'filter': {
@@ -62,29 +63,31 @@ class WebManager(threading.Thread):
                                           name=item_info.json()['result']['name'], price=0)
                     new_product.save()
                 else:
-                    # TODO: прописать логирование ошибок
+                    # TODO: РїСЂРѕРїРёСЃР°С‚СЊ Р»РѕРіРёСЂРѕРІР°РЅРёРµ РѕС€РёР±РѕРє
                     pass
+        else:
+            if response.status_code == 403:
+                client.is_active = False
 
-        with open(MEDIA_ROOT + "auto_loaders/" + str(client.username) + ".txt", "w") as _:
+        client.product_blocked = False
+        client.save()
+        with open(path.join(MEDIA_ROOT, "auto_loaders", str(client.username) + ".txt"), "w", encoding="utf-8") as _:
             pass
-        while proc.is_alive():
-            with open(MEDIA_ROOT + "auto_loaders/" + str(client.username) + ".txt", "a") as auto_loader:
+        while proc.is_alive:
+            with open(path.join(MEDIA_ROOT, "auto_loaders", str(client.username) + ".txt"), "a", encoding="utf-8") as auto_loader:
                 if not proc.result_data.empty():
                     product_id, product_name, price = proc.result_data.get()
-                    product = None
-                    try:
-                        product = Product.objects.get(shop=client, product_name=product_name)
-                    except Product.DoesNotExist:
+                    product = Product.objects.filter(shop=client, name=product_name)
+                    if len(product) == 0:
                         continue
-                    except Product.MultipleObjectsReturned:
-                        finded_products = Product.objects.filter(shop=client, product_name=product_name)
-                        for i in range(1, finded_products):
-                            finded_products[i].delete()
-                        product = finded_products[0]
-                    finally:
-                        product.price = price
-                        auto_loader.write(f"{product.offer_id} {product.name} {product.price}\n")
-                        product.save()
+                    elif len(product) > 1:
+                        for i in range(1, len(product)):
+                            product[i].delete()
+                    product = product[0]
+                    product.price = int(price)
+                    auto_loader.write(f"{product.offer_id} {product.name} {product.price}\n")
+                    product.save()
+
         if WebManager.queue.empty():
             WebManager.isActive = False
         else:

@@ -18,7 +18,7 @@ from django.utils.deprecation import MiddlewareMixin
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'repricer.Client'
 
@@ -35,8 +35,8 @@ SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["repriser-xreronxi.amvera.io", "*"]
-CSRF_TRUSTED_ORIGINS = ["https://djangorepricer-xreronxi.amvera.io"]
+ALLOWED_HOSTS = ["*"]
+#CSRF_TRUSTED_ORIGINS = ["*"]
 
 # Application definition
 
@@ -88,7 +88,7 @@ WSGI_APPLICATION = 'repricerDjango.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR.parent.joinpath("data") / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
