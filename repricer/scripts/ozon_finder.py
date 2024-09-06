@@ -1,20 +1,12 @@
-import argparse
-import queue
 import re
 import threading
 import time
-from multiprocessing import Process
 
 import requests
-from django.conf import settings
 from django.core.files.base import ContentFile
 from lxml import etree
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-
-import repricer.models
 
 
 def check_block(driver: webdriver.Chrome):
@@ -114,123 +106,37 @@ def get_shop_infos(client_id, api_key, shop_url):
 
 class SeleniumProcess(threading.Thread):
     QUEUE_COUNT = 1
-    scroll_script = """
-    window.scrollBy(0, document.body.scrollHeight);
-    """
 
-    def __init__(self, client: repricer.models.Client, stop: bool):
-        super().__init__()
-        self._method = 0
-        self._client = client
-        self.result_data = queue.Queue()
-        self._stop = stop
+    @staticmethod
+    def get_driver():
+        return get_driver()
 
-    def data_writer(self, q: queue.Queue, driver):
-        trigger = True
-
-        while trigger:
-            if self._stop:
+    def find_price(self, url: str, driver: webdriver.Chrome):
+        page_source = get_code(driver, url, delay=0.5)
+        root = etree.HTML(page_source)
+        parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
+        parent_length = len(parent_elements)
+        price_container = None
+        if parent_length == 2:
+            # Значит товар не доставляется или не найден
+            price_container = parent_elements[1].xpath(
+                "./div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/span")[0]
+        elif parent_length == 6:
+            # Значит товар есть
+            price_container = \
+            parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath("./div[1]/div[1]/div[1]/div[1]//span[1]")
+            if len(price_container) == 0:
+                print(url)
                 return
-            for i in range(100):
-                if not q.empty():
-                    link = q.get()
-                    code = get_code(driver, link, delay=0.5)
-                    htree = etree.HTML(code)
-                    if htree is None:
-                        # TODO: тут должен быть лог
-                        with open(f"log/{driver.title}.html", "w", encoding="utf-8") as f:
-                            f.write(driver.page_source)
-                        continue
-                    main_info = htree.xpath("/html/body/div[1]/div[1]/div[1]/div[4]")
-                    if len(main_info) == 0:
-                        # TODO: тут должен быть лог
-                        with open(f"log/{driver.title}.html", "w", encoding="utf-8") as f:
-                            f.write(driver.page_source)
-                        continue
-                    else:
-                        main_info = main_info[0]
-                    product_id = \
-                        main_info.xpath("./div[2]/div[1]/div[1]/div[1]/div[2]/button[1]/div[1]")[0].text.split(" ")[1]
-                    product_name = main_info.xpath("./div[3]/div[1]/div[1]/div[2]/div[1]/div[1]/h1[1]")[0].text
-                    product_name = product_name.replace('\n', '').strip()
-                    price = main_info.xpath(
-                        "./div[3]/div[2]/div[1]/div[@data-widget='webSale']//span[1]")[0]
-                    if len(price.xpath(".//span[1]")) > 0:
-                        price = price.xpath(".//span[1]")[0].text
-                    else:
-                        price = price.text
-                    price = int(re.sub(r'\D', '', price))
-                    self.result_data.put(item=(product_id, product_name, price))
-                    break
-                if i == 99:
-                    trigger = False
-                time.sleep(0.1)
-        driver.close()
-
-    def money_parser(self, driver: webdriver.Chrome):
-        try:
-            driver.get(self._client.shop_address)
-            htree = etree.HTML(get_code(driver, self._client.shop_address, delay=2, exec_script=self.scroll_script, exec_times=2))
-            parent_layout = htree.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer']")[1]
-            parent_layout = parent_layout.xpath(".//div[@data-widget='megaPaginator']")[0]
-            queues = list()
-            for i in range(SeleniumProcess.QUEUE_COUNT):
-                queues.append(queue.Queue())
-
-            encounter = 0
-            pages = parent_layout.xpath("./div")[1]
-            if pages.get("class") != "re3":
-                htree = etree.HTML(get_code(driver, self._client.shop_address, delay=4, exec_script=self.scroll_script, exec_times=4))
-                parent_layout = htree.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer']")[1]
-                parent_layout = parent_layout.xpath(".//div[@data-widget='megaPaginator']")[0]
-                pages = parent_layout.xpath("./div")[1]
-                if pages.get("class") != "re3":
-                    print("Error. Can't find pages")
-
-            string = etree.tostring(pages, pretty_print=True, encoding='unicode') #TODO удалить
-            pages = pages.xpath("./div[1]/div[1]/div[1]/a")
-            if len(pages) == 0:
-                pages = ["empty"]
-            '''
-        threads = list()
-        for i in range(SeleniumProcess.QUEUE_COUNT):
-            threads.append(threading.Thread(target=self.data_writer, args=(queues[i],)))
-
-        for i in range(SeleniumProcess.QUEUE_COUNT):
-            threads[i].start()
-            '''
-            index = 0
-            for i in range(len(pages)):
-                if i != 0:
-                    htree = etree.HTML(get_code(driver, "https://www.ozon.ru" + pages[i].get("href"), delay=2, exec_script=self.scroll_script, exec_times=2))
-                    parent_layout = htree.xpath(
-                        "/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer']/div[1]/div[1]/div["
-                        "2]/div[3]")[
-                        0]
-                elements = parent_layout.xpath("./div[1]/div[1]/div[1]/div")
-                j = 0
-                for element in elements:
-                    j += 1
-                    link = element.xpath("./div[1]/a[1]")
-                    if len(link) == 0:
-                        # TODO: прописать лог
-                        with open(f"{index}.html", "w", encoding="utf-8") as f:
-                            f.write(etree.tostring(element, pretty_print=True, encoding="unicode"))
-                            index += 1
-                        continue
-                    queues[0].put("https://www.ozon.ru" + link[0].get("href"))
-                    encounter += 1
-            # TODO: Сюда засунуть
-            self._client.product_blocked = False
-            self._client.save()
-            self.data_writer(queues[0], driver)
-            #driver.close() TODO: убрать в мультинитевой версии
-
-        except Exception as e:
-            print(e)
-            self._client.product_blocked = False
-            self._client.save()
+            else:
+                price_container = price_container[0]
+            if len(price_container) > 0:
+                price_container = price_container.xpath(".//span[1]")[0]
+        else:
+            print("Can't parse page", url)
+            return None
+        price = re.sub(r'\D', '', price_container.text)
+        return price
 
     def run(self):
-        if self._method == 0:
-            self.money_parser(driver=get_driver())
+        pass

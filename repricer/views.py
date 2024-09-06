@@ -3,15 +3,13 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
-from repricer.models import Client, Product
 from repricer.forms import LoginForm, RegisterForm
-from repricer.scripts.ozon_finder import get_shop_infos, get_driver, get_code
+from repricer.models import Client, Product
+from repricer.scripts.ozon_finder import get_shop_infos, get_driver, SeleniumProcess
 from repricer.scripts.web_manager import WebManager
-from lxml import etree
-from selenium.webdriver.common.by import By
 
 
 # Create your views here.
@@ -142,11 +140,21 @@ def change_price(request):
 def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
-
     if True:
         client.product_blocked = True
         client.save()
-        WebManager.add_to_queue(client)
+        mass = list()
+        iter = 0
+        for client, product, url in WebManager.generate_data(client):
+            WebManager.add_to_queue(client, product, url)
+            mass.append(product)
+            iter += 1
+            if iter >= 100:
+                Product.objects.bulk_create(mass)
+                mass = list()
+                iter = 0
+        if len(mass) != 0:
+            Product.objects.bulk_create(mass)
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
@@ -154,8 +162,9 @@ def load_from_ozon(request):
 
 # TODO: убрать
 def example(request):
-    page_href = "https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790"
+    page_href = "https://www.ozon.ru/product/teleskop-sky-watcher-bk-p2001eq5-1517132768/"
     driver = get_driver()
-    code = get_code(driver, page_href)
+    proc = SeleniumProcess()
+    proc.find_price(page_href, driver)
     driver.close()
-    return HttpResponse(code)
+    return HttpResponse("hi")
