@@ -31,7 +31,7 @@ def register_view(request):
         if result['status']:
             new_password = make_password(api_key)
             new_client = Client(username=client_id, password=new_password, shop_address=shop_url,
-                                shop_name=result['shop_name'])
+                                shop_name=result['shop_name'], api_key=api_key)
             new_client.save()
             new_client.shop_avatar.save(result['avatar_name'], result['avatar_path'])
             login(request, new_client)
@@ -69,7 +69,7 @@ def login_view(request):
 def get_data(request):
     client = request.user
     assert isinstance(client, Client)
-    if not client.product_blocked:
+    if True:
         ready_products = Product.objects.filter(shop=client)
         return render(request, "products_list.html", {'products': ready_products})
     else:
@@ -99,7 +99,7 @@ def change_price(request):
         else:
             headers = {
                 'Client-Id': client.username,
-                'Api-Key': client.password
+                'Api-Key': client.api_key
             }
             data = {
                 'filter': {
@@ -143,7 +143,7 @@ def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
 
-    if not client.product_blocked:
+    if True:
         client.product_blocked = True
         client.save()
         WebManager.add_to_queue(client)
