@@ -13,8 +13,14 @@ class Client(AbstractUser):
 
 
 class Product(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     shop = models.ForeignKey(Client, on_delete=models.NOT_PROVIDED)
     offer_id = models.CharField(max_length=20)
     name = models.CharField(max_length=50)
     price = models.IntegerField()
+    gray_price = models.IntegerField(default=-1)
+    it = models.IntegerField(default=0)
+
+    def __str__(self):
+        return str(self.id)
 
