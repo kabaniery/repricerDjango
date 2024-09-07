@@ -85,6 +85,7 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
         result['status'] = True
     except Exception as e:
         print(e)
+        print(current_driver.title)
         result['status'] = False
         result['message'] = e
     current_driver.close()
