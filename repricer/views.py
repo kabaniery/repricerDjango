@@ -67,12 +67,8 @@ def login_view(request):
 def get_data(request):
     client = request.user
     assert isinstance(client, Client)
-    if True:
-        ready_products = Product.objects.filter(shop=client)
-        return render(request, "products_list.html", {'products': ready_products})
-    else:
-        messages.error(request, "Загрузка данных ещё не завершилась")
-        return redirect('index')
+    ready_products = Product.objects.filter(shop=client)
+    return render(request, "products_list.html", {'products': ready_products})
 
 
 @login_required
@@ -140,21 +136,12 @@ def change_price(request):
 def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
-    if True:
+    if not client.product_blocked:
         client.product_blocked = True
         client.save()
-        mass = list()
-        iter = 0
-        for client, product, url in WebManager.generate_data(client):
-            WebManager.add_to_queue(client, product, url)
-            mass.append(product)
-            iter += 1
-            if iter >= 100:
-                Product.objects.bulk_create(mass)
-                mass = list()
-                iter = 0
-        if len(mass) != 0:
-            Product.objects.bulk_create(mass)
+        Product.objects.filter(shop=client).delete()
+        print(len(Product.objects.filter(shop=client)))
+        WebManager(client).start()
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
@@ -162,9 +149,13 @@ def load_from_ozon(request):
 
 # TODO: убрать
 def example(request):
-    page_href = "https://www.ozon.ru/product/teleskop-sky-watcher-bk-p2001eq5-1517132768/"
+    '''page_href = "https://www.ozon.ru/product/teleskop-sky-watcher-bk-p2001eq5-1517132768/"
     driver = get_driver()
     proc = SeleniumProcess()
     proc.find_price(page_href, driver)
-    driver.close()
+    driver.close()'''
+    client = request.user
+    assert isinstance(client, Client)
+    client.product_blocked = False
+    client.save()
     return HttpResponse("hi")

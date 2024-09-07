@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 
 
 def check_block(driver: webdriver.Chrome):
+    if "Antibot Challenge Page" == driver.title:
+        time.sleep(4)
     if "Доступ ограничен" == driver.title:
         elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME,
                                                                                                        "div").find_element(
@@ -35,8 +37,11 @@ def get_driver():
     chrome_options.add_argument(
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/91.0.4472.124 Safari/537.36")
+    chrome_options.add_argument("--disable-software-rasterizer") #TODO Проверить
+
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
+
     # service = Service('/usr/bin/chromedriver') TODO: вернуть для релиза
     current_driver = webdriver.Chrome(options=chrome_options)
     return current_driver
@@ -112,7 +117,7 @@ class SeleniumProcess(threading.Thread):
         return get_driver()
 
     def find_price(self, url: str, driver: webdriver.Chrome):
-        page_source = get_code(driver, url, delay=0.5)
+        page_source = get_code(driver, url, delay=0.0)
         root = etree.HTML(page_source)
         parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
         parent_length = len(parent_elements)
@@ -133,7 +138,7 @@ class SeleniumProcess(threading.Thread):
             if len(price_container) > 0:
                 price_container = price_container.xpath(".//span[1]")[0]
         else:
-            print("Can't parse page", url)
+            print("Can't parse page", driver.title)
             return None
         price = re.sub(r'\D', '', price_container.text)
         return price
