@@ -148,6 +148,7 @@ def load_from_ozon(request):
 
 
 # TODO: убрать
+@login_required
 def example(request):
     '''page_href = "https://www.ozon.ru/product/teleskop-sky-watcher-bk-p2001eq5-1517132768/"
     driver = get_driver()
