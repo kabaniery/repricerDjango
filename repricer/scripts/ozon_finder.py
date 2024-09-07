@@ -6,6 +6,7 @@ import requests
 from django.core.files.base import ContentFile
 from lxml import etree
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 
 
@@ -37,13 +38,13 @@ def get_driver():
     chrome_options.add_argument(
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/91.0.4472.124 Safari/537.36")
-    chrome_options.add_argument("--disable-software-rasterizer") #TODO Проверить
+    chrome_options.add_argument("--disable-software-rasterizer")  # Может надо заменить
 
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    # service = Service('/usr/bin/chromedriver') TODO: вернуть для релиза
-    current_driver = webdriver.Chrome(options=chrome_options)
+    service = Service('/usr/bin/chromedriver')
+    current_driver = webdriver.Chrome(service=service, options=chrome_options)
     return current_driver
 
 
@@ -129,7 +130,8 @@ class SeleniumProcess(threading.Thread):
         elif parent_length == 6:
             # Значит товар есть
             price_container = \
-            parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath("./div[1]/div[1]/div[1]/div[1]//span[1]")
+                parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath(
+                    "./div[1]/div[1]/div[1]/div[1]//span[1]")
             if len(price_container) == 0:
                 print(url)
                 return

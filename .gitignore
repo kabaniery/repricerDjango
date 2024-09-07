@@ -4,3 +4,8 @@ venv
 .idea
 data
 db.sqlite3
+
+media/auto_loaders/*
+media/avatars/*
+!media/auto_loaders/.gitkeep
+!media/avatars/.gitkeep
