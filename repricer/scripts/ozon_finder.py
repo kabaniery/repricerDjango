@@ -39,6 +39,7 @@ def get_driver():
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/91.0.4472.124 Safari/537.36")
     chrome_options.add_argument("--disable-software-rasterizer")  # Может надо заменить
+    chrome_options.add_argument("--verbose")  # Логи
 
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
