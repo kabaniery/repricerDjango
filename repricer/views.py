@@ -1,4 +1,5 @@
 import requests
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
@@ -8,8 +9,8 @@ from django.shortcuts import render, redirect
 
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
-from repricer.scripts.ozon_finder import get_shop_infos, get_driver, SeleniumProcess
-from repricer.scripts.web_manager import WebManager
+from repricer.tasks import add_product
+from scripts.ShopInfo import get_shop_infos
 
 
 # Create your views here.
@@ -140,8 +141,24 @@ def load_from_ozon(request):
         client.product_blocked = True
         client.save()
         Product.objects.filter(shop=client).delete()
-        print(len(Product.objects.filter(shop=client)))
-        WebManager(client).start()
+        header = {
+            "Client-Id": client.username,
+            'Api-Key': client.api_key
+        }
+        body = {
+            'filter':
+                {
+                    'visibility': 'VISIBLE'
+                },
+            'limit': 1000
+        }
+        manager = apps.get_app_config('repricer')
+
+        all_data = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=header, json=body)
+        if all_data.status_code == 200:
+            print("Overall size is", len(all_data.json()['result']['items']))
+            for item in all_data.json()['result']['items']:
+                manager.add_product(client.username, client.api_key, item['offer_id'])
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)

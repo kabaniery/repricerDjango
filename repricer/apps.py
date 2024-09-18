@@ -1,18 +1,21 @@
+import atexit
+
 from django.apps import AppConfig
+from ChromeController.ProcessManager import Manager
 
 
 class RepricerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'repricer'
+    manager = None
 
     def ready(self):
-        import psutil
-        import os
+        print("Django started")
+        self.manager = Manager(3)
+        self.manager.start_project()
+        print("Process manager started")
 
-        for proc in psutil.process_iter(['pid', 'name']):
-            try:
-                if 'chrome' in proc.info['name'].lower():
-                    pid = proc.info['pid']
-                    os.kill(pid, 9)
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
+
+
+
+
