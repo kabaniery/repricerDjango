@@ -10,6 +10,6 @@ if __name__ == "__main__":
     options.add_argument("--disable-gpu")
     options.add_argument("--remote-debugging-port=9222")
 
-    service = Service("/usr/bin/google-chrome")
+    service = Service("/usr/bin/chromedriver")
 
     driver = webdriver.Chrome(options=options, service=service)
