@@ -51,26 +51,26 @@ class SeleniumManager(multiprocessing.Process):
         import django.db.utils
 
         # Копипаста из Driver
-        chrome_options = ChromeOptions()
-        chrome_options.add_argument("--enable-javascript")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+        options = ChromeOptions()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--remote-debugging-port=9222")
         from random import randint
         port = randint(9000, 9999)
-        chrome_options.add_argument(f"--remote-debugging-port={port}")
-        chrome_options.add_argument("--window-size=1920x1080")
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_argument(
+        options.add_argument(f"--remote-debugging-port={port}")
+        options.add_argument("--window-size=1920x1080")
+        options.add_argument("--start-maximized")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument(
             "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/91.0.4472.124 Safari/537.36")
-        chrome_options.add_argument("--disable-software-rasterizer")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument("--disable-software-rasterizer")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
 
         # service = Service('/usr/bin/chromedriver')
-        driver = Chrome(options=chrome_options)
+        driver = Chrome(options=options)
 
         mass = list()
         it = 0

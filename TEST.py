@@ -1,18 +1,20 @@
+from pyvirtualdisplay import Display
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 
-if __name__ == "__main__":
-    options = Options()
-    #options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--remote-debugging-port=9222")
+# Создаем виртуальный дисплей
+display = Display(visible=0, size=(1920, 1080))
+display.start()
 
-    service = Service("/usr/bin/chromedriver")
+# Настройка драйвера Chrome
+options = webdriver.ChromeOptions()
+options.add_argument('--no-sandbox')  # Требуется для работы Chrome в контейнере
+options.add_argument('--disable-dev-shm-usage')  # Уменьшает использование памяти
+driver = webdriver.Chrome(options=options)
 
-    driver = webdriver.Chrome(options=options, service=service)
-    driver.get("https://www.w3.org")
-    print(driver.title)
-    print(driver.page_source[0:50])
+# Пример запроса
+driver.get("https://www.ozon.ru/seller/elektromart-1590790/products/?miniapp=seller_1590790")
+print(driver.title)
+
+# Закрываем драйвер и виртуальный дисплей
+driver.quit()
+display.stop()
