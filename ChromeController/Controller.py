@@ -69,8 +69,8 @@ class SeleniumManager(multiprocessing.Process):
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
 
-        service = Service('/usr/bin/chromedriver')
-        driver = Chrome(service=service, options=chrome_options)
+        # service = Service('/usr/bin/chromedriver')
+        driver = Chrome(options=chrome_options)
 
         mass = list()
         it = 0

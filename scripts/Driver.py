@@ -24,6 +24,6 @@ def get_options():
 
 
 def get_driver():
-    service = Service('/usr/bin/chromedriver')
-    current_driver = webdriver.Chrome(service=service, options=get_options())
+    # service = Service('/usr/bin/chromedriver')
+    current_driver = webdriver.Chrome(options=get_options())
     return current_driver
