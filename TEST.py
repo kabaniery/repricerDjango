@@ -13,4 +13,4 @@ if __name__ == "__main__":
     service = Service("/usr/bin/chromedriver")
 
     driver = webdriver.Chrome(options=options, service=service)
-    driver.get("w3.org")
+    driver.get("https://www.w3.org")
