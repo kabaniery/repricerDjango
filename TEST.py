@@ -1,7 +1,14 @@
-import time
-
-from scripts.ShopInfo import get_driver
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 
 if __name__ == "__main__":
-    driver = [get_driver() for _ in range(5)]
-    time.sleep(20)
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+
+    service = Service("/usr/bin/google-chrome")
+
+    driver = webdriver.Chrome(options=options, service=service)
