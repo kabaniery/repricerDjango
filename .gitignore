@@ -9,3 +9,9 @@ media/auto_loaders/*
 media/avatars/*
 !media/auto_loaders/.gitkeep
 !media/avatars/.gitkeep
+
+repricerDjango/__pycache__
+repricer/__pycache__
+repricer/scripts/__pycache__
+repricer/middleware/__pycache__
+repricer/migrations/__pycache__
