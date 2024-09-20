@@ -11,10 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-from repricer.ChromeProcess.ChromeController import shutdown
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
 
 application = get_wsgi_application()
 
-atexit.register(shutdown)

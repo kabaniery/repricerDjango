@@ -1,35 +1,51 @@
 import multiprocessing
 import queue
+import threading
 import time
 
 import django
 import requests
 
-from Controller import SeleniumManager
+from ChromeController.Controller import SeleniumManager
 from scripts.LanguageAdapting import generate_ozon_name
 
 
 class Manager(multiprocessing.Process):
     _singleton = None
 
+    @staticmethod
+    def shutdown():
+        if Manager._singleton is not None:
+            for thread in Manager._singleton.threads:
+                thread.terminate()
+            Manager._singleton.terminate()
+
+    @staticmethod
+    def get_instance():
+        return Manager._singleton
+
     def __new__(cls, *args, **kwargs):
         if cls._singleton is None:
             cls._singleton = super(Manager, cls).__new__(cls)
         return cls._singleton
 
-    def __init__(self, count_process: int):
+    def __init__(self, count_process: int, q):
         super().__init__()
-        self.putQueue = queue.Queue()
-        self.threads = [SeleniumManager(self.putQueue) for _ in range(count_process)]
-        self._started = False
+        self.putQueue = q
+        self.started = False
+        self.count = count_process
+        self.threads = list()
 
-    def start_project(self):
-        if not self._started:
-            self._started = True
-            self.start()
+    def __del__(self):
+        print("Manager stopped")
 
     def run(self):
+        self.started = True
+        time.sleep(5)
+        import os
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
         django.setup()
+        self.threads = [SeleniumManager(self.putQueue) for _ in range(self.count)]
         for thread in self.threads:
             thread.start()
 
@@ -58,7 +74,7 @@ class Manager(multiprocessing.Process):
 
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
-        json_data = response.json()
+        json_data = response.json()['result']
         product = Product(id=f"{client.username}::{json_data['offer_id']}", offer_id=json_data['offer_id'],
                           shop=client, name=json_data['name'],
                           gray_price=int(float(json_data['price'])), price=0)

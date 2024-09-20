@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+import multiprocessing
 import os
 import sys
+
+from ChromeController.ProcessManager import Manager
+from manager_queue import set_queue, get_queue
 
 
 def main():
@@ -19,4 +23,8 @@ def main():
 
 
 if __name__ == '__main__':
+    man = multiprocessing.Manager()
+    set_queue(man.Queue())
+    manager = Manager(1, get_queue())
+    manager.start()
     main()
