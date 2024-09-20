@@ -16,4 +16,4 @@ class RepricerConfig(AppConfig):
         RepricerConfig.manager = Manager(-1, None)
 
 
-atexit.register(Manager.shutdown())
+atexit.register(Manager.shutdown)
