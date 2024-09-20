@@ -14,3 +14,5 @@ if __name__ == "__main__":
 
     driver = webdriver.Chrome(options=options, service=service)
     driver.get("https://www.w3.org")
+    print(driver.title)
+    print(driver.page_source[0:50])
