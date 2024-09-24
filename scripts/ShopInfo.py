@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 
 from scripts.Driver import get_driver
 
+it = 0
 
 def check_block(driver: webdriver.Chrome):
     if "Antibot Challenge Page" == driver.title:
@@ -27,7 +28,9 @@ def check_block(driver: webdriver.Chrome):
             print(e)
             print(driver.current_url)
             print(len(driver.current_url.split("/")))
-            with open(driver.current_url.split("/")[3], "w") as file:
+            global it
+            it += 1
+            with open(f"{it}.html", "w") as file:
                 file.write(driver.page_source)
     return None
 
