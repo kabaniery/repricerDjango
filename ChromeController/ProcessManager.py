@@ -43,6 +43,7 @@ class Manager(multiprocessing.Process):
     def run(self):
         self.started = True
         display = Display(visible=0, size=(1920, 1080))
+        display.start()
         time.sleep(5)
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
