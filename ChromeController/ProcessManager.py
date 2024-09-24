@@ -55,6 +55,7 @@ class Manager(multiprocessing.Process):
         for thread in self.threads:
             thread.join()
         display.stop()
+        print("diplay stopped")
     def put_data(self, data):
         self.putQueue.put(data)
 
