@@ -5,7 +5,9 @@ import time
 from decimal import Decimal
 
 import django
+from celery.worker.state import requests
 from lxml import etree
+from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 
 from scripts.ShopInfo import get_driver, get_code
@@ -13,10 +15,60 @@ from scripts.ShopInfo import get_driver, get_code
 from selenium.webdriver import ChromeOptions, Chrome
 
 
+def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_url):
+    try:
+        html = etree.HTML(get_code(current_driver, shop_url))
+        parental_object = html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
+                                     "1]/div[1]/div[1]")[0]
+        image_object = parental_object.xpath("./div[1]/div[1]")[0]
+        style_value = image_object.get('style')
+        background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
+        shop_name = parental_object.xpath("./div[2]/div[1]/span[1]")[0].text
+        response = requests.get(background_url)
+        filename: str = str(client_id) + "." + background_url.split(".")[-1]
+        # Сохранение изображения
+        from django.core.files.base import ContentFile
+        image_content = ContentFile(response.content, filename)
+        result['avatar_path'] = image_content
+        result['avatar_name'] = filename
+        result['shop_name'] = shop_name
+        result['status'] = True
+    except Exception as e:
+        print(e)
+        print(current_driver.title)
+        result['status'] = False
+        result['message'] = e
+    current_driver.close()
+
+
 class SeleniumManager(multiprocessing.Process):
     def __init__(self, data_queue):
         super().__init__()
+        self.driver = None
         self.data_queue = data_queue
+        self._lock = threading.Lock()
+
+    def force_push(self, shop_url, client_id, api_key):
+        self._lock.acquire()
+        result = dict()
+        url_thread = threading.Thread(target=shop_info, args=(get_driver(), result, client_id, shop_url))
+        url_thread.start()
+
+        headers = {
+            'Client-Id': str(client_id),
+            'Api-Key': api_key,
+        }
+        body = {
+            'filter': dict(),
+            'limit': 1
+        }
+        response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
+        url_thread.join()
+        self._lock.release()
+        if response.status_code == 200:
+            if result['status']:
+                return result
+        return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
 
     def find_price(self, url, driver):
         page_source = get_code(driver, url, delay=0.0)
@@ -71,7 +123,7 @@ class SeleniumManager(multiprocessing.Process):
         options.add_argument("--enable-javascript")
 
         # service = Service('/usr/bin/chromedriver')
-        driver = Chrome(options=options)
+        self.driver = Chrome(options=options)
 
         mass = list()
         it = 0
@@ -84,8 +136,9 @@ class SeleniumManager(multiprocessing.Process):
                     continue
                 if not client.product_blocked:
                     continue
-
-                price = self.find_price(url, driver)
+                self._lock.acquire()
+                price = self.find_price(url, self.driver)
+                self._lock.release()
                 if price is None:
                     continue
                 product.price = Decimal(price)

@@ -5,6 +5,7 @@ import django
 import requests
 from pyvirtualdisplay import Display
 
+import ChromeController.Controller
 from ChromeController.Controller import SeleniumManager
 from scripts.LanguageAdapting import generate_ozon_name
 
@@ -55,6 +56,10 @@ class Manager(multiprocessing.Process):
             thread.join()
         display.stop()
         print("diplay stopped")
+
+    def push_request(self, shop_url, client_id, api_key):
+        assert isinstance(self.threads[0], SeleniumManager)
+        return self.threads[0].force_push(shop_url, client_id, api_key)
 
     def put_data(self, data):
         self.putQueue.put(data)
