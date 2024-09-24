@@ -23,8 +23,4 @@ def main():
 
 
 if __name__ == '__main__':
-    man = multiprocessing.Manager()
-    set_queue(man.Queue())
-    manager = Manager(1, get_queue())
-    manager.start()
     main()
