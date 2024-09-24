@@ -68,6 +68,7 @@ class SeleniumManager(multiprocessing.Process):
         options.add_argument("--disable-software-rasterizer")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument("--enable-javascript")
 
         # service = Service('/usr/bin/chromedriver')
         driver = Chrome(options=options)
