@@ -26,8 +26,6 @@ def check_block(driver: webdriver.Chrome):
             return driver.page_source
         except Exception as e:
             print(e)
-            print(driver.current_url)
-            print(len(driver.current_url.split("/")))
             global it
             it += 1
             with open(f"{it}.html", "w") as file:
