@@ -25,7 +25,7 @@ def check_block(driver: webdriver.Chrome):
             return driver.page_source
         except Exception as e:
             print(e)
-            with open(driver.current_url, "w") as file:
+            with open(driver.current_url.split("/")[4]+".html", "w") as file:
                 file.write(driver.page_source)
     return None
 
