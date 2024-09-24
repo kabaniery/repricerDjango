@@ -41,8 +41,8 @@ class Manager(multiprocessing.Process):
 
     def run(self):
         self.started = True
-        #display = Display(visible=False, size=(1920, 1080))
-        #display.start()
+        display = Display(visible=False, size=(1920, 1080))
+        display.start()
         time.sleep(5)
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
@@ -53,7 +53,7 @@ class Manager(multiprocessing.Process):
 
         for thread in self.threads:
             thread.join()
-        #display.stop()
+        display.stop()
         print("diplay stopped")
 
     def put_data(self, data):
