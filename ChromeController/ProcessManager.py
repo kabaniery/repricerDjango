@@ -5,6 +5,7 @@ import time
 
 import django
 import requests
+from pyvirtualdisplay import Display
 
 from ChromeController.Controller import SeleniumManager
 from scripts.LanguageAdapting import generate_ozon_name
@@ -41,6 +42,7 @@ class Manager(multiprocessing.Process):
 
     def run(self):
         self.started = True
+        display = Display(visible=0, size=(1920, 1080))
         time.sleep(5)
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
@@ -51,7 +53,7 @@ class Manager(multiprocessing.Process):
 
         for thread in self.threads:
             thread.join()
-
+        display.stop()
     def put_data(self, data):
         self.putQueue.put(data)
 
