@@ -15,13 +15,18 @@ def check_block(driver: webdriver.Chrome):
     if "Antibot Challenge Page" == driver.title:
         time.sleep(4)
     if "Доступ ограничен" == driver.title:
-        elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME,
-                                                                                                       "div").find_element(
-            By.TAG_NAME, "div")
-        elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
-        elem[2].find_element(By.TAG_NAME, "button").click()
-        time.sleep(2)
-        return driver.page_source
+        try:
+            elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME,
+                                                                                                           "div").find_element(
+                By.TAG_NAME, "div")
+            elem = elem.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")
+            elem[2].find_element(By.TAG_NAME, "button").click()
+            time.sleep(2)
+            return driver.page_source
+        except Exception as e:
+            print(e)
+            with open(driver.current_url, "w") as file:
+                file.write(driver.page_source)
     return None
 
 
