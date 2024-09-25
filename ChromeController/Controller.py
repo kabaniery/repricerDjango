@@ -51,7 +51,7 @@ class SeleniumManager(multiprocessing.Process):
     def force_push(self, shop_url, client_id, api_key):
         self._lock.acquire()
         result = dict()
-        url_thread = threading.Thread(target=shop_info, args=(get_driver(), result, client_id, shop_url))
+        url_thread = threading.Thread(target=shop_info, args=(self.driver, result, client_id, shop_url))
         url_thread.start()
 
         headers = {
