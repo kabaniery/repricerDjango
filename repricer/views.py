@@ -18,7 +18,10 @@ from scripts.ShopInfo import get_shop_infos
 def start_page(request):
     client = request.user
     assert isinstance(client, Client)
-    return render(request, 'index.html', {'avatar_path': client.shop_avatar.url, 'shop_name': client.shop_name})
+    try:
+        return render(request, 'index.html', {'avatar_path': client.shop_avatar.url, 'shop_name': client.shop_name})
+    except ValueError:
+        return render(request, 'index.html', {'avatar_path': '', 'shop_name': client.shop_name}) #TODO: Проставить путь к статическому аватару
 
 
 def register_view(request):
@@ -31,9 +34,8 @@ def register_view(request):
         if result['status']:
             new_password = make_password(api_key)
             new_client = Client(username=client_id, password=new_password, shop_address=shop_url,
-                                shop_name=result['shop_name'], api_key=api_key)
+                                shop_name=client_id, api_key=api_key)
             new_client.save()
-            new_client.shop_avatar.save(result['avatar_name'], result['avatar_path'])
             login(request, new_client)
             return redirect('index')
         else:

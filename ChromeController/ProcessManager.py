@@ -15,6 +15,7 @@ class Manager(multiprocessing.Process):
 
     @staticmethod
     def shutdown():
+        print("shutting down manager")
         if Manager._singleton is not None:
             singleton = Manager._singleton
             for thread in singleton.threads:
@@ -36,18 +37,21 @@ class Manager(multiprocessing.Process):
         self.started = False
         self.count = count_process
         self.threads = list()
+        self.forceQueue = multiprocessing.Manager().Queue()
 
     def __del__(self):
         print("Manager stopped")
 
     def run(self):
         self.started = True
+        print("main cycle started")
+        print(self.count)
         display = Display(visible=False, size=(1920, 1080))
         display.start()
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
         django.setup()
-        self.threads = [SeleniumManager(self.putQueue) for _ in range(self.count)]
+        self.threads = [SeleniumManager(self.putQueue, self.forceQueue) for _ in range(self.count)]
         for thread in self.threads:
             thread.start()
 
@@ -57,8 +61,23 @@ class Manager(multiprocessing.Process):
         print("diplay stopped")
 
     def push_request(self, shop_url, client_id, api_key):
-        assert isinstance(self.threads[0], SeleniumManager)
-        return self.threads[0].force_push(shop_url, client_id, api_key)
+
+        result = dict()
+        headers = {
+            'Client-Id': str(client_id),
+            'Api-Key': api_key,
+        }
+        body = {
+            'filter': dict(),
+            'limit': 1
+        }
+        response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
+        result['status'] = True
+        if response.status_code == 200:
+            self.forceQueue.put((shop_url, client_id))
+            if result['status']:
+                return result
+        return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
 
     def put_data(self, data):
         self.putQueue.put(data)

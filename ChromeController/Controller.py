@@ -6,69 +6,27 @@ from decimal import Decimal
 
 import django
 from celery.worker.state import requests
+from django.core.files.base import ContentFile
 from lxml import etree
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 
-from scripts.ShopInfo import get_driver, get_code
+import scripts.Driver
+from scripts.ShopInfo import get_driver
+from scripts.Driver import get_code
 
 from selenium.webdriver import ChromeOptions, Chrome
 
 
-def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_url):
-    try:
-        html = etree.HTML(get_code(current_driver, shop_url))
-        parental_object = html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
-                                     "1]/div[1]/div[1]")[0]
-        image_object = parental_object.xpath("./div[1]/div[1]")[0]
-        style_value = image_object.get('style')
-        background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
-        shop_name = parental_object.xpath("./div[2]/div[1]/span[1]")[0].text
-        response = requests.get(background_url)
-        filename: str = str(client_id) + "." + background_url.split(".")[-1]
-        # Сохранение изображения
-        from django.core.files.base import ContentFile
-        image_content = ContentFile(response.content, filename)
-        result['avatar_path'] = image_content
-        result['avatar_name'] = filename
-        result['shop_name'] = shop_name
-        result['status'] = True
-    except Exception as e:
-        print(e)
-        print(current_driver.title)
-        result['status'] = False
-        result['message'] = e
-    current_driver.close()
-
-
 class SeleniumManager(multiprocessing.Process):
-    def __init__(self, data_queue):
+    def __init__(self, data_queue, force_queue):
         super().__init__()
         self.driver = None
         self.data_queue = data_queue
         self._lock = threading.Lock()
+        self.force_queue = force_queue
 
-    def force_push(self, shop_url, client_id, api_key):
-        self._lock.acquire()
-        result = dict()
-        url_thread = threading.Thread(target=shop_info, args=(self.driver, result, client_id, shop_url))
-        url_thread.start()
 
-        headers = {
-            'Client-Id': str(client_id),
-            'Api-Key': api_key,
-        }
-        body = {
-            'filter': dict(),
-            'limit': 1
-        }
-        response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
-        url_thread.join()
-        self._lock.release()
-        if response.status_code == 200:
-            if result['status']:
-                return result
-        return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
 
     def find_price(self, url, driver):
         page_source = get_code(driver, url, delay=0.0)
@@ -129,6 +87,29 @@ class SeleniumManager(multiprocessing.Process):
         it = 0
         while True:
             try:
+                if not self.force_queue.empty():
+                    shop_url, client_id = self.force_queue.get()
+                    try:
+                        html = etree.HTML(get_code(self.driver, shop_url))
+                        parental_object = \
+                        html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
+                                   "1]/div[1]/div[1]")[0]
+                        image_object = parental_object.xpath("./div[1]/div[1]")[0]
+                        style_value = image_object.get('style')
+                        background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
+                        shop_name = parental_object.xpath("./div[2]/div[1]/span[1]")[0].text
+                        response = requests.get(background_url)
+                        filename: str = str(client_id) + "." + background_url.split(".")[-1]
+                        # Сохранение изображения
+                        image_content = ContentFile(response.content, filename)
+                        client = Client.objects.get(username=client_id)
+                        client.shop_name = shop_name
+                        client.shop_avatar.save(filename, image_content)
+                        client.save()
+                    except Exception as e:
+                        print(e)
+                        print(self.driver.title)
+                    continue
                 client, product, url = self.data_queue.get(timeout=3)
                 if client is None or product is None or url is None:
                     it = 0
@@ -145,7 +126,7 @@ class SeleniumManager(multiprocessing.Process):
                 print("product", product.name, "price", product.price)
                 mass.append(product)
                 it += 1
-                product.it = it
+                scripts.Driver.it = it
                 if it % 10 == 0:
                     try:
                         Product.objects.bulk_create(mass)
