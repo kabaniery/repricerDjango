@@ -44,9 +44,34 @@
         border-left: 1px solid black;
         border-right: 1px solid black;
     }
+    .shadow_messages {
+        position: fixed;
+        width: 400px;
+        height: auto;
+        background-color: white;
+        z-index: 2;
+        animation: fadeOut 3s ease forwards;
+        animation-delay: 3s;
+    }
+    @keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
 </style>
 <body>
+{% if messages %}
+<div class="shadow_messages">
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
 <form action="{% url 'change_price' %}" method="post" class="body_form">
+        {% csrf_token %}
         <div class="set_buttons">
             <button type="button" onclick="location.href = '{%  url 'index' %}';">На главную</button>
             <button type="button" onclick="location.href = '{% url 'get_data' %}'">Перезагрузить данные</button>

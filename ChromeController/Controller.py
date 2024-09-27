@@ -5,7 +5,7 @@ import time
 from decimal import Decimal
 
 import django
-from celery.worker.state import requests
+import requests
 from django.core.files.base import ContentFile
 from lxml import etree
 from selenium import webdriver
@@ -90,7 +90,10 @@ class SeleniumManager(multiprocessing.Process):
                 if not self.force_queue.empty():
                     shop_url, client_id = self.force_queue.get()
                     try:
-                        html = etree.HTML(get_code(self.driver, shop_url))
+                        code = get_code(self.driver, shop_url)
+                        with open("temp.html", "w") as f:
+                            f.write(code)
+                        html = etree.HTML(code)
                         parental_object = \
                         html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
                                    "1]/div[1]/div[1]")[0]

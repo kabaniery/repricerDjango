@@ -1,3 +1,5 @@
+from itertools import product
+
 import requests
 from django.apps import apps
 from django.contrib import messages
@@ -82,7 +84,7 @@ def change_price(request):
         assert isinstance(client, Client)
         old_val = dict()
         new_val = dict()
-        for key, value in request.POST.items:
+        for key, value in request.POST.items():
             if str(key)[:3] == 'old':
                 old_val[str(key)[3::]] = value
             elif str(key)[:3] == 'new':
@@ -129,11 +131,16 @@ def change_price(request):
                 response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
                                          json=new_data)
                 if response.status_code == 200:
+                    for item in prices:
+                        product = Product.objects.get(shop=client, offer_id=item['offer_id'])
+                        product.price = item['price']
+                        product.save()
                     messages.info(request, "Успешно")
                 else:
                     messages.warning(request, "Ошибка " + response.text)
             else:
                 messages.warning(request, "Не удалось получить информацию о ценах")
+    return redirect('index')
 
 
 @login_required
