@@ -112,14 +112,17 @@ def change_price(request):
             if response.status_code == 200:
                 prices = list()
                 for item in response.json()['result']['items']:
-                    green_coeff[item['offer_id']] = old_val[item['offer_id']] / item['price']['marketing_price']
-                    new_price = int(new_val[item['offer_id']] * item['price']['price'] / old_val[item['offer_id']])
+                    print(int(float(new_val[item['offer_id']])))
+                    print(int(float(item['price']['price'])))
+                    print(int(float(old_val[item['offer_id']])))
+                    green_coeff[item['offer_id']] = int(float(old_val[item['offer_id']])) / int(float(item['price']['marketing_price']))
+                    new_price = int(int(float(new_val[item['offer_id']])) * int(float(item['price']['price'])) / int(float(old_val[item['offer_id']])))
                     actual_data = {
                         'auto_action_enabled': 'UNKNOWN',
                         'currency_code': item['price']['currency_code'],
                         'min_price': str(int(new_price * 0.8)),
                         'offer_id': item['offer_id'],
-                        'old_price': '0',
+                        'old_price': str(new_price + 500),
                         'price': str(new_price),
                         'price_strategy_enabled': 'UNKNOWN',
                         'product_id': item['product_id']
@@ -133,14 +136,14 @@ def change_price(request):
                 if response.status_code == 200:
                     for item in prices:
                         product = Product.objects.get(shop=client, offer_id=item['offer_id'])
-                        product.price = item['price']
+                        product.price = int(float(new_val[item['offer_id']]))
                         product.save()
                     messages.info(request, "Успешно")
                 else:
                     messages.warning(request, "Ошибка " + response.text)
             else:
                 messages.warning(request, "Не удалось получить информацию о ценах")
-    return redirect('index')
+    return redirect('get_data')
 
 
 @login_required

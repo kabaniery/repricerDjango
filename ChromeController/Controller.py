@@ -34,27 +34,32 @@ class SeleniumManager(multiprocessing.Process):
         parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
         parent_length = len(parent_elements)
         price_container = None
+        gray_price = None
         if parent_length == 2:
             # Значит товар не доставляется или не найден
             price_container = parent_elements[1].xpath(
                 "./div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/span")[0]
         elif parent_length == 6:
+            #Элемент с data-widget = webPrice
+            element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath(
+                "./div[1]/div[1]/div[1]/div[1]")[0]
             # Значит товар есть
             price_container = \
-                parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath(
-                    "./div[1]/div[1]/div[1]/div[1]//span[1]")
+                parent_elements[3].xpath(".//span[1]")
             if len(price_container) == 0:
-                print(url)
+                print("Error: can't find price on page", url)
                 return
             else:
                 price_container = price_container[0]
             if len(price_container) > 0:
                 price_container = price_container.xpath(".//span[1]")[0]
+                gray_price_container = element.xpath("./div[1]/div[2]//span[1]")[0]
+                gray_price = re.sub(r'\D', '', gray_price_container.text)
         else:
             print("Can't parse page", driver.title)
             return None
         price = re.sub(r'\D', '', price_container.text)
-        return price
+        return price, gray_price
 
     def run(self):
         from repricer.models import Client, Product
@@ -121,11 +126,13 @@ class SeleniumManager(multiprocessing.Process):
                 if not client.product_blocked:
                     continue
                 self._lock.acquire()
-                price = self.find_price(url, self.driver)
+                price, gray_price = self.find_price(url, self.driver)
                 self._lock.release()
                 if price is None:
                     continue
                 product.price = Decimal(price)
+                if gray_price is not None:
+                    product.gray_price = Decimal(gray_price)
                 print("product", product.name, "price", product.price)
                 mass.append(product)
                 it += 1
