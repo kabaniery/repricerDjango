@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 from ChromeController.ProcessManager import Manager
@@ -195,4 +195,4 @@ def get_product_count(request):
     client = request.user
     assert isinstance(client, Client)
     products = Product.objects.filter(shop=client)
-    return HttpResponse(products.count())
+    return JsonResponse({'count': products.count()})

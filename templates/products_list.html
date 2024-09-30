@@ -99,5 +99,25 @@
 
         </div>
 </form>
+<script>
+    var count_products = 0;
+
+    function update_list() {
+        fetch({% url 'get_count' %}).then(response => response.json()).then(data => {
+            console.log(count_products + " " + data.count);
+            if (data.count !== count_products) {
+                location.reload()
+            } else {
+                setTimeout(update_list, 3000);
+            }
+        })
+    }
+
+    function init() {
+        fetch({% url 'get_count' %}).then(response => response.json())
+            .then(data => count_products = data.count).then(_ => setTimeout(update_list, 3000));
+    }
+    window.onload = init();
+</script>
 </body>
 </html>
