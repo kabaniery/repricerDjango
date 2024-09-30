@@ -1,5 +1,7 @@
+import os
 from itertools import product
 
+import openpyxl
 import requests
 from django.apps import apps
 from django.contrib import messages
@@ -10,7 +12,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 from ChromeController.ProcessManager import Manager
-from repricer.forms import LoginForm, RegisterForm
+from repricer.forms import LoginForm, RegisterForm, FileForm
 from repricer.models import Client, Product
 from scripts.ShopInfo import get_shop_infos
 
@@ -196,3 +198,25 @@ def get_product_count(request):
     assert isinstance(client, Client)
     products = Product.objects.filter(shop=client)
     return JsonResponse({'count': products.count()})
+
+@login_required
+def load_from_file(request):
+    if request.method == 'POST':
+        client = request.user
+        assert isinstance(client, Client)
+
+        with open(f"tmp/{client.username}.xlsx", 'wb') as f:
+            for chunk in request.FILES['csv_input'].chunks():
+                f.write(chunk)
+        workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
+        sheet = workbook.active
+        mass = list()
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            row_values = row[:3]
+            print(row_values)
+            new_product = Product(id=f"{client.username}:{row_values[0]}", offer_id=row_values[0], name=row_values[1], price=row_values[2])
+            mass.append(new_product)
+        os.remove(f"tmp/{client.username}.xlsx")
+        Product.objects.filter(shop=client).delete()
+        Product.objects.bulk_create(mass)
+    return redirect('index')

@@ -17,3 +17,7 @@ class RegisterForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput(),
                                label='Api Key')
     shop_url = forms.CharField(label="Адрес магазина")
+
+
+class FileForm(forms.Form):
+    file = forms.FileField()

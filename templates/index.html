@@ -31,10 +31,12 @@
             <div class='shop_info'><h3>{{ shop_name }}</h3></div>
 		</div>
 		<div class="data_place">
-            <form id="send_csv">
+            <form action="{% url 'load_csv' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 			    <div class="data_block">
 				    <h5>Загрузить таблицу с фактическими ценами:</h5>
-				    <div style="border: 2px solid #0044FF; border-radius: 5px 20px 20px 5px; display: inline-block;"><input type="file" id="csv_input" name="csv_input" accept=".csv, .xlsx">
+				    <div style="border: 2px solid #0044FF; border-radius: 5px 20px 20px 5px; display: inline-block;">
+                        <input type="file" id="csv_input" name="csv_input" accept=".xlsx">
 				    <button type="submit">Загрузить</button></div>
 			    </div>
             </form>
