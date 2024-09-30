@@ -104,6 +104,6 @@ class Manager(multiprocessing.Process):
         json_data = response.json()['result']
         product = Product(id=f"{client.username}::{json_data['offer_id']}", offer_id=json_data['offer_id'],
                           shop=client, name=json_data['name'],
-                          gray_price=int(float(json_data['price'])), price=0)
+                          gray_price=0, price=0)
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku'])))

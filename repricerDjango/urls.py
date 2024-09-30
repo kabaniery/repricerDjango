@@ -18,7 +18,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
-from repricer.views import start_page, login_view, register_view, get_data, change_price, load_from_ozon, example
+from repricer.views import start_page, login_view, register_view, get_data, change_price, load_from_ozon, example, \
+    get_product_count
 from repricerDjango import settings
 
 urlpatterns = [
@@ -29,7 +30,8 @@ urlpatterns = [
     path('get_data/', get_data, name='get_data'),
     path('change_price/', change_price, name='change_price'),
     path('load_ozon', load_from_ozon, name='load_ozon'),
-    path('temp/', example, name='temp')
+    path('temp/', example, name='temp'),
+    path('get_count/', get_product_count, name='get_count')
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

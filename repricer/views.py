@@ -108,21 +108,20 @@ def change_price(request):
                 'limit': len(editing_orders.keys())
             }
             response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
-            green_coeff = dict()
             if response.status_code == 200:
                 prices = list()
                 for item in response.json()['result']['items']:
-                    print(int(float(new_val[item['offer_id']])))
-                    print(int(float(item['price']['price'])))
-                    print(int(float(old_val[item['offer_id']])))
-                    green_coeff[item['offer_id']] = int(float(old_val[item['offer_id']])) / int(float(item['price']['marketing_price']))
-                    new_price = int(int(float(new_val[item['offer_id']])) * int(float(item['price']['price'])) / int(float(old_val[item['offer_id']])))
+                    #old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
+                    new_green = int(float(new_val[item['offer_id']]))
+                    fact_price = int(float(item['price']['price']))
+                    old_green = int(float(old_val[item['offer_id']]))
+                    new_price = int(new_green * fact_price / old_green)
                     actual_data = {
                         'auto_action_enabled': 'UNKNOWN',
                         'currency_code': item['price']['currency_code'],
-                        'min_price': str(int(new_price * 0.8)),
+                        'min_price': str(new_price - 1),
                         'offer_id': item['offer_id'],
-                        'old_price': str(new_price + 500),
+                        'old_price': '0',
                         'price': str(new_price),
                         'price_strategy_enabled': 'UNKNOWN',
                         'product_id': item['product_id']
@@ -190,3 +189,10 @@ def example(request):
     client.product_blocked = False
     client.save()
     return HttpResponse("hi")
+
+@login_required
+def get_product_count(request):
+    client = request.user
+    assert isinstance(client, Client)
+    products = Product.objects.filter(shop=client)
+    return HttpResponse(products.count())

@@ -45,7 +45,7 @@ class SeleniumManager(multiprocessing.Process):
                 "./div[1]/div[1]/div[1]/div[1]")[0]
             # Значит товар есть
             price_container = \
-                parent_elements[3].xpath(".//span[1]")
+                element.xpath(".//span[1]")
             if len(price_container) == 0:
                 print("Error: can't find price on page", url)
                 return
@@ -118,7 +118,15 @@ class SeleniumManager(multiprocessing.Process):
                         print(e)
                         print(self.driver.title)
                     continue
-                client, product, url = self.data_queue.get(timeout=3)
+                client = None
+                product = None
+                url = None
+                if not self.data_queue.empty():
+                    client, product, url = self.data_queue.get(timeout=3)
+                else:
+                    Product.objects.bulk_create(mass)
+                    mass = list()
+                    continue
                 if client is None or product is None or url is None:
                     it = 0
                     time.sleep(1)
@@ -133,6 +141,9 @@ class SeleniumManager(multiprocessing.Process):
                 product.price = Decimal(price)
                 if gray_price is not None:
                     product.gray_price = Decimal(gray_price)
+                else:
+                    product.gray_price = price
+                print(price, gray_price, end="; ")
                 print("product", product.name, "price", product.price)
                 mass.append(product)
                 it += 1
