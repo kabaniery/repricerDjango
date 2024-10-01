@@ -5,16 +5,61 @@ import openpyxl
 import requests
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
+from elftools.construct import MappingAdapter
 
 from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm, FileForm
 from repricer.models import Client, Product
 from scripts.ShopInfo import get_shop_infos
+
+#products: {'offer-id': (old_price, new_price, new_gray_price)}
+def changing_price(client: Client, products):
+    headers = {
+        'Client-Id': client.username,
+        'Api-Key': client.api_key
+    }
+    data = {
+        'filter': {
+            'offer_id': list(products.keys())
+        },
+        'limit': len(products.keys())
+    }
+    response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
+    if response.status_code == 200:
+        prices = list()
+        for item in response.json()['result']['items']:
+            # old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
+            new_green = int(float(products[item['offer_id']][1]))
+            fact_price = int(float(item['price']['price']))
+            old_green = int(float(products[item['offer_id']][0]))
+            new_price = int(new_green * fact_price / old_green)
+            actual_data = {
+                'auto_action_enabled': 'UNKNOWN',
+                'currency_code': item['price']['currency_code'],
+                'min_price': str(new_price - 1),
+                'offer_id': item['offer_id'],
+                'old_price': '0',
+                'price': str(new_price),
+                'price_strategy_enabled': 'UNKNOWN',
+                'product_id': item['product_id']
+            }
+            prices.append(actual_data)
+        new_data = {
+            'prices': prices
+        }
+        response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
+                                 json=new_data)
+        if response.status_code == 200:
+            new_price_response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=products.keys).json()['result']['items']
+            for item in new_price_response:
+                prices = item['price']
+                print(item['offer_id'], prices['marketing_price'], prices['price'], ";\nСтарые цены:", products[item['offer_id']])
+    return "Ok"
 
 
 # Create your views here.
@@ -76,7 +121,7 @@ def get_data(request):
     client = request.user
     assert isinstance(client, Client)
     ready_products = Product.objects.filter(shop=client)
-    return render(request, "products_list.html", {'products': ready_products})
+    return render(request, "products_list.html", {'products': ready_products[:450]})
 
 
 @login_required
@@ -210,13 +255,74 @@ def load_from_file(request):
                 f.write(chunk)
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
-        mass = list()
+        mass = dict()
+        manager = Manager.get_instance()
         for row in sheet.iter_rows(min_row=2, values_only=True):
             row_values = row[:3]
+            price = 0
+            try:
+                price = int(row_values[2])
+            except ValueError:
+                continue
             print(row_values)
-            new_product = Product(id=f"{client.username}:{row_values[0]}", offer_id=row_values[0], name=row_values[1], price=row_values[2])
-            mass.append(new_product)
-        os.remove(f"tmp/{client.username}.xlsx")
-        Product.objects.filter(shop=client).delete()
-        Product.objects.bulk_create(mass)
+            name = row_values[1]
+            if name is None or name == "":
+                name = row_values[0]
+            mass[str(int(float(row_values[0])))] = price
+        headers = {
+            'Client-Id': client.username,
+            'Api-Key': client.api_key
+        }
+        data = {
+            'filter': {
+                'offer_id': list(mass.keys())
+            },
+            'limit': len(mass.keys())
+        }
+        response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
+        if response.status_code == 200:
+            prices = list()
+            for item in response.json()['result']['items']:
+                product = None
+                try:
+                    product = Product.objects.get(shop=client, offer_id=item['offer_id'])
+                except Product.DoesNotExist:
+                    print(item['offer_id'])
+                    continue
+                new_green = int(float(mass[item['offer_id']]))
+                fact_price = int(float(item['price']['price']))
+                old_green = int(float(product.price))
+                new_price = int(new_green * fact_price / old_green)
+                actual_data = {
+                    'auto_action_enabled': 'UNKNOWN',
+                    'currency_code': item['price']['currency_code'],
+                    'min_price': str(new_price - 1),
+                    'offer_id': item['offer_id'],
+                    'old_price': '0',
+                    'price': str(new_price),
+                    'price_strategy_enabled': 'UNKNOWN',
+                    'product_id': item['product_id']
+                }
+                prices.append(actual_data)
+            new_data = {
+                'prices': prices
+            }
+            response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
+                                     json=new_data)
+            if response.status_code == 200:
+                for item in prices:
+                    product = Product.objects.get(shop=client, offer_id=item['offer_id'])
+                    product.price = int(float(mass[item['offer_id']]))
+                    product.save()
+                messages.info(request, "Успешно")
+            else:
+                messages.warning(request, "Ошибка " + response.text)
+        else:
+            messages.warning(request, "Не удалось получить информацию о ценах")
     return redirect('index')
+
+
+@login_required
+def log_out(request):
+    logout(request)
+    return redirect('login')

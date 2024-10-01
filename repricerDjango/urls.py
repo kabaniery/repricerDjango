@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path
 
 from repricer.views import start_page, login_view, register_view, get_data, change_price, load_from_ozon, example, \
-    get_product_count, load_from_file
+    get_product_count, load_from_file, logout, log_out
 from repricerDjango import settings
 
 urlpatterns = [
@@ -32,7 +32,8 @@ urlpatterns = [
     path('load_ozon', load_from_ozon, name='load_ozon'),
     path('temp/', example, name='temp'),
     path('get_count/', get_product_count, name='get_count'),
-    path('load_csv/', load_from_file, name='load_csv')
+    path('load_csv/', load_from_file, name='load_csv'),
+    path('logout/', log_out, name='logout'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

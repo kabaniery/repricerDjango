@@ -7,6 +7,20 @@ from selenium import webdriver
 
 from scripts.Driver import get_code, get_driver
 
+def get_products():
+    headers = {
+        'Client-Id': "1267611",
+        'Api-Key': "6607a019-7034-43ed-b75d-c6fa63d066d8"
+    }
+    data = {
+        'filter':
+            {
+                'visibility': 'VISIBLE'
+            },
+        'limit': 1000
+    }
+    response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=data)
+    return response.json()['result']
 
 def test_display():
     # Создаем виртуальный дисплей
@@ -85,4 +99,4 @@ def page_parser():
 
 
 if __name__ == '__main__':
-    page_parser()
+    print(get_products())
