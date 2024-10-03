@@ -1,4 +1,5 @@
 import os
+import time
 from itertools import product
 
 import openpyxl
@@ -15,10 +16,12 @@ from elftools.construct import MappingAdapter
 from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm, FileForm
 from repricer.models import Client, Product
+from repricer.tasks import correct_price
+from scripts.LanguageAdapting import generate_ozon_name
 from scripts.ShopInfo import get_shop_infos
 
 #products: {'offer-id': (old_price, new_price, new_gray_price)}
-def changing_price(client: Client, products):
+def changing_price(client: Client, products, last_time=False):
     headers = {
         'Client-Id': client.username,
         'Api-Key': client.api_key
@@ -55,10 +58,16 @@ def changing_price(client: Client, products):
         response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
                                  json=new_data)
         if response.status_code == 200:
-            new_price_response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=products.keys).json()['result']['items']
-            for item in new_price_response:
-                prices = item['price']
-                print(item['offer_id'], prices['marketing_price'], prices['price'], ";\nСтарые цены:", products[item['offer_id']])
+            if last_time:
+                for key, value in products:
+                    product = Product.objects.get(shop=client, offer_id=key)
+                    product.price = value
+                    product.save()
+                return "Ok"
+            manager = Manager.get_instance()
+            time.sleep(3)
+            for key, value in products.items():
+                manager.correct_product(client.username, client.api_key, key, value[1])
     return "Ok"
 
 
@@ -136,59 +145,16 @@ def change_price(request):
                 old_val[str(key)[3::]] = value
             elif str(key)[:3] == 'new':
                 new_val[str(key)[3::]] = value
-
         editing_orders = dict()
         for key, value in new_val.items():
             if old_val[key] != value:
-                editing_orders[key] = value
+                product = Product.objects.get(shop=client, offer_id=key)
+                new_gray_price = product.gray_price / product.price * int(float(value))
+                editing_orders[key] = (old_val[key], value, new_gray_price)
         if len(editing_orders.keys()) == 0:
             messages.warning(request, "Нет цен для замены")
         else:
-            headers = {
-                'Client-Id': client.username,
-                'Api-Key': client.api_key
-            }
-            data = {
-                'filter': {
-                    'offer_id': list(editing_orders.keys())
-                },
-                'limit': len(editing_orders.keys())
-            }
-            response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
-            if response.status_code == 200:
-                prices = list()
-                for item in response.json()['result']['items']:
-                    #old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
-                    new_green = int(float(new_val[item['offer_id']]))
-                    fact_price = int(float(item['price']['price']))
-                    old_green = int(float(old_val[item['offer_id']]))
-                    new_price = int(new_green * fact_price / old_green)
-                    actual_data = {
-                        'auto_action_enabled': 'UNKNOWN',
-                        'currency_code': item['price']['currency_code'],
-                        'min_price': str(new_price - 1),
-                        'offer_id': item['offer_id'],
-                        'old_price': '0',
-                        'price': str(new_price),
-                        'price_strategy_enabled': 'UNKNOWN',
-                        'product_id': item['product_id']
-                    }
-                    prices.append(actual_data)
-                new_data = {
-                    'prices': prices
-                }
-                response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
-                                         json=new_data)
-                if response.status_code == 200:
-                    for item in prices:
-                        product = Product.objects.get(shop=client, offer_id=item['offer_id'])
-                        product.price = int(float(new_val[item['offer_id']]))
-                        product.save()
-                    messages.info(request, "Успешно")
-                else:
-                    messages.warning(request, "Ошибка " + response.text)
-            else:
-                messages.warning(request, "Не удалось получить информацию о ценах")
+            changing_price(client, editing_orders)
     return redirect('get_data')
 
 
@@ -259,6 +225,9 @@ def load_from_file(request):
         manager = Manager.get_instance()
         for row in sheet.iter_rows(min_row=2, values_only=True):
             row_values = row[:3]
+            offer_id = row_values[0]
+            if isinstance(offer_id, float):
+                offer_id = str(int(offer_id))
             price = 0
             try:
                 price = int(row_values[2])
@@ -268,57 +237,14 @@ def load_from_file(request):
             name = row_values[1]
             if name is None or name == "":
                 name = row_values[0]
-            mass[str(int(float(row_values[0])))] = price
-        headers = {
-            'Client-Id': client.username,
-            'Api-Key': client.api_key
-        }
-        data = {
-            'filter': {
-                'offer_id': list(mass.keys())
-            },
-            'limit': len(mass.keys())
-        }
-        response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
-        if response.status_code == 200:
-            prices = list()
-            for item in response.json()['result']['items']:
-                product = None
-                try:
-                    product = Product.objects.get(shop=client, offer_id=item['offer_id'])
-                except Product.DoesNotExist:
-                    print(item['offer_id'])
-                    continue
-                new_green = int(float(mass[item['offer_id']]))
-                fact_price = int(float(item['price']['price']))
-                old_green = int(float(product.price))
-                new_price = int(new_green * fact_price / old_green)
-                actual_data = {
-                    'auto_action_enabled': 'UNKNOWN',
-                    'currency_code': item['price']['currency_code'],
-                    'min_price': str(new_price - 1),
-                    'offer_id': item['offer_id'],
-                    'old_price': '0',
-                    'price': str(new_price),
-                    'price_strategy_enabled': 'UNKNOWN',
-                    'product_id': item['product_id']
-                }
-                prices.append(actual_data)
-            new_data = {
-                'prices': prices
-            }
-            response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
-                                     json=new_data)
-            if response.status_code == 200:
-                for item in prices:
-                    product = Product.objects.get(shop=client, offer_id=item['offer_id'])
-                    product.price = int(float(mass[item['offer_id']]))
-                    product.save()
-                messages.info(request, "Успешно")
-            else:
-                messages.warning(request, "Ошибка " + response.text)
-        else:
-            messages.warning(request, "Не удалось получить информацию о ценах")
+            try:
+                product = Product.objects.get(shop=client, offer_id=offer_id)
+            except Exception:
+                print("can't find product")
+                continue
+            if product.price != price:
+                mass[offer_id] = [product.price, price]
+        changing_price(client, mass)
     return redirect('index')
 
 

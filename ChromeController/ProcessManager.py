@@ -1,12 +1,15 @@
 import multiprocessing
 import time
+from datetime import timezone
 
 import django
 import requests
+from django.utils import timezone
 from pyvirtualdisplay import Display
 
 import ChromeController.Controller
 from ChromeController.Controller import SeleniumManager
+from repricer.models import Client, Product
 from scripts.LanguageAdapting import generate_ozon_name
 
 
@@ -54,14 +57,29 @@ class Manager(multiprocessing.Process):
         self.threads = [SeleniumManager(self.putQueue, self.forceQueue) for _ in range(self.count)]
         for thread in self.threads:
             thread.start()
+        while True:
+            for thread in self.threads:
+                if not thread.is_alive():
+                    display.stop()
+                    print("display stopped")
+                    for thread in self.threads:
+                        if thread.is_alive():
+                            thread.terminate()
+                    return
+            ctime = timezone.now()
+            clients = Client.objects.all()
+            for client in clients:
+                if (ctime - client.last_update).total_seconds() > 3600:
+                    client.last_update = ctime
+                    client.save()
+                    products = Product.objects.filter(shop=client)
+                    for product in products:
+                        if product.needed_price is not None and product.needed_price > 0:
+                            self.correct_product(client.username, client.api_key, product.offer_id, product.needed_price)
 
-        for thread in self.threads:
-            thread.join()
-        display.stop()
-        print("diplay stopped")
+            time.sleep(120)
 
     def push_request(self, shop_url, client_id, api_key):
-
         result = dict()
         headers = {
             'Client-Id': str(client_id),
@@ -106,4 +124,28 @@ class Manager(multiprocessing.Process):
                           shop=client, name=json_data['name'],
                           gray_price=0, price=0)
         self.putQueue.put(
-            (client, product, generate_ozon_name(json_data['name'], json_data['sku'])))
+            (client, product, generate_ozon_name(json_data['name'], json_data['sku']), None))
+
+    def correct_product(self, username, api_key, offer_id, new_price):
+        headers = {
+            "Client-Id": username,
+            'Api-Key': api_key
+        }
+        body = {
+            'offer_id': offer_id
+        }
+        response = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+
+        if response.status_code != 200 or response.json()['result'] is None:
+            time.sleep(0.5)
+            item_data = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+            if item_data.status_code != 200:
+                print("Error on request product/info with offerId", body['offer_id'], ". Text:", item_data.text)
+                return
+
+        from repricer.models import Client, Product
+        client = Client.objects.get(username=username)
+        json_data = response.json()['result']
+        product = Product.objects.get(shop=client, offer_id=offer_id)
+        self.putQueue.put(
+            (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
