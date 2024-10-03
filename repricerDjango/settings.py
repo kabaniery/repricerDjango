@@ -22,7 +22,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'repricer.Client'
 
-LOGIN_URL = 'login/'
+LOGIN_URL = '/login/'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
@@ -33,10 +33,16 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
-#CSRF_TRUSTED_ORIGINS = ["*"]
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+]
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
 # Application definition
 
@@ -87,8 +93,15 @@ WSGI_APPLICATION = 'repricerDjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'repricer',
+        'USER': 'repricer-manager',
+        'PASSWORD': 'repricerpassword',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 

@@ -1,7 +1,4 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-
-from repricer.models import Client
 
 
 class LoginForm(forms.Form):

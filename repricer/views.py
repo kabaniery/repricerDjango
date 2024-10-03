@@ -85,7 +85,7 @@ def register_view(request):
         result = manager.push_request(shop_url, client_id, api_key)
         if result['status']:
             new_password = make_password(api_key)
-            new_client = Client(username=client_id, password=new_password, shop_address=shop_url,
+            new_client = Client(username=client_id, password=new_password,
                                 shop_name=client_id, api_key=api_key)
             new_client.save()
             login(request, new_client)
@@ -183,20 +183,6 @@ def load_from_ozon(request):
         return HttpResponse("You are already added", status=400)
 
 
-# TODO: убрать
-@login_required
-def example(request):
-    '''page_href = "https://www.ozon.ru/product/teleskop-sky-watcher-bk-p2001eq5-1517132768/"
-    driver = get_driver()
-    proc = SeleniumProcess()
-    proc.find_price(page_href, driver)
-    driver.close()'''
-    client = request.user
-    assert isinstance(client, Client)
-    client.product_blocked = False
-    client.save()
-    return HttpResponse("hi")
-
 @login_required
 def get_product_count(request):
     client = request.user
@@ -216,28 +202,27 @@ def load_from_file(request):
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
         mass = dict()
-        manager = Manager.get_instance()
+        updated_products = list()
         for row in sheet.iter_rows(min_row=2, values_only=True):
-            row_values = row[:3]
+            row_values = row[:2]
             offer_id = row_values[0]
             if isinstance(offer_id, float):
                 offer_id = str(int(offer_id))
             price = 0
             try:
-                price = int(row_values[2])
+                price = int(row_values[1])
             except ValueError:
                 continue
-            print(row_values)
-            name = row_values[1]
-            if name is None or name == "":
-                name = row_values[0]
             try:
                 product = Product.objects.get(shop=client, offer_id=offer_id)
+                product.needed_price = price
+                updated_products.append(product)
             except Exception:
-                print("can't find product")
+                print("can't find product ")
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
+        Product.objects.bulk_update(updated_products, ['needed_price'])
         changing_price(client, mass)
     return redirect('index')
 
