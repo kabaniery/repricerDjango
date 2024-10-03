@@ -2,8 +2,6 @@ import atexit
 import os
 
 from django.apps import AppConfig
-from ChromeController.ProcessManager import Manager
-from multiprocessing import Manager as M
 
 
 class RepricerConfig(AppConfig):
@@ -13,7 +11,7 @@ class RepricerConfig(AppConfig):
 
     def ready(self):
         print("Django started")
-        RepricerConfig.manager = Manager(-1, None)
 
 
+from ChromeController.ProcessManager import Manager
 atexit.register(Manager.shutdown)

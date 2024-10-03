@@ -1,24 +1,18 @@
-import os
 import time
-from itertools import product
 
 import openpyxl
 import requests
-from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
-from elftools.construct import MappingAdapter
 
 from ChromeController.ProcessManager import Manager
-from repricer.forms import LoginForm, RegisterForm, FileForm
+from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
-from repricer.tasks import correct_price
-from scripts.LanguageAdapting import generate_ozon_name
-from scripts.ShopInfo import get_shop_infos
+
 
 #products: {'offer-id': (old_price, new_price, new_gray_price)}
 def changing_price(client: Client, products, last_time=False):

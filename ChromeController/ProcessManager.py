@@ -7,9 +7,7 @@ import requests
 from django.utils import timezone
 from pyvirtualdisplay import Display
 
-import ChromeController.Controller
 from ChromeController.Controller import SeleniumManager
-from repricer.models import Client, Product
 from scripts.LanguageAdapting import generate_ozon_name
 
 
@@ -54,6 +52,7 @@ class Manager(multiprocessing.Process):
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
         django.setup()
+        from repricer.models import Client, Product
         self.threads = [SeleniumManager(self.putQueue, self.forceQueue) for _ in range(self.count)]
         for thread in self.threads:
             thread.start()

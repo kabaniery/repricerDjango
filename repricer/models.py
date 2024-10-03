@@ -19,7 +19,6 @@ class Product(models.Model):
     offer_id = models.CharField(max_length=20)
     name = models.CharField(max_length=50)
     price = models.IntegerField()
-    gray_price = models.IntegerField(default=-1)
     it = models.IntegerField(default=0)
     needed_price = models.IntegerField(null=True)
     def __str__(self):
