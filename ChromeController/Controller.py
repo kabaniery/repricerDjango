@@ -148,7 +148,6 @@ class SeleniumManager(multiprocessing.Process):
                     product.gray_price = Decimal(gray_price)
                 else:
                     product.gray_price = price
-                print("product", product.name, "; price", product.price)
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 10:
                         from repricer.views import changing_price
