@@ -30,6 +30,8 @@ def changing_price(client: Client, products, last_time=False):
     if response.status_code == 200:
         prices = list()
         for item in response.json()['result']['items']:
+            if item['offer_id'] == '797320':
+                print("test started")
             # old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
             new_green = int(float(products[item['offer_id']][1]))
             fact_price = int(float(item['price']['price']))
