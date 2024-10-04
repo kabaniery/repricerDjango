@@ -137,8 +137,7 @@ class SeleniumManager(multiprocessing.Process):
                     continue
                 if not client.product_blocked:
                     continue
-                if product.offer_id == '797320':
-                    print('test2 started')
+
                 gray_price = None
                 price = self.find_price(url, self.driver)
 
@@ -149,6 +148,8 @@ class SeleniumManager(multiprocessing.Process):
                     product.gray_price = Decimal(gray_price)
                 else:
                     product.gray_price = price
+                if product.offer_id == '797320':
+                    print('test2 started')
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 10:
                         from repricer.views import changing_price

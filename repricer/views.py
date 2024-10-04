@@ -13,6 +13,13 @@ from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
 
+def is_old_price_correct(old_price, price):
+    if price < 400:
+        return old_price - price > 20
+    elif price < 10000:
+        return price / old_price < 0.95
+    else:
+        return old_price - price > 500
 
 #products: {'offer-id': (old_price, new_price, new_gray_price)}
 def changing_price(client: Client, products, last_time=False):
@@ -30,19 +37,23 @@ def changing_price(client: Client, products, last_time=False):
     if response.status_code == 200:
         prices = list()
         for item in response.json()['result']['items']:
-            if item['offer_id'] == '797320':
-                print("test started")
             # old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
             new_green = int(float(products[item['offer_id']][1]))
             fact_price = int(float(item['price']['price']))
             old_green = int(float(products[item['offer_id']][0]))
             new_price = int(new_green * fact_price / old_green)
+            if item['offer_id'] == '797320':
+                print("test started")
+            if is_old_price_correct(int(item['price']['old_price']), new_price):
+                old_price = item['price']['old_price']
+            else:
+                old_price = str(int(item['price']['old_price'] * new_price / fact_price))
             actual_data = {
                 'auto_action_enabled': 'UNKNOWN',
                 'currency_code': item['price']['currency_code'],
                 'min_price': str(new_price - 1),
                 'offer_id': item['offer_id'],
-                'old_price': '0',
+                'old_price': old_price,
                 'price': str(new_price),
                 'price_strategy_enabled': 'UNKNOWN',
                 'product_id': item['product_id']
