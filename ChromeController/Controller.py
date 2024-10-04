@@ -128,7 +128,11 @@ class SeleniumManager(multiprocessing.Process):
                 url = None
                 new_price = None
                 if not self.data_queue.empty():
-                    client, product, url, new_price = self.data_queue.get(timeout=3)
+                    try:
+                        client, product, url, new_price = self.data_queue.get(timeout=3)
+                    except Exception:
+                        time.sleep(3)
+                        continue
                 else:
                     self._lock.acquire()
                     Product.objects.bulk_create(mass)
