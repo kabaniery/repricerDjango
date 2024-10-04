@@ -33,7 +33,7 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'www.repiser.ru'
