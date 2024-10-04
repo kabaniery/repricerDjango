@@ -137,7 +137,8 @@ class SeleniumManager(multiprocessing.Process):
                     continue
                 if not client.product_blocked:
                     continue
-
+                if product.offer_id == '797320':
+                    print('test2 started')
                 gray_price = None
                 price = self.find_price(url, self.driver)
 
@@ -151,7 +152,7 @@ class SeleniumManager(multiprocessing.Process):
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 10:
                         from repricer.views import changing_price
-                        changing_price(client, {product.offer_id: (int(float(price)), int(float(new_price)))}, last_time=True)
+                        changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]}, last_time=True)
                     product.save()
                     continue
                 mass.append(product)
@@ -166,5 +167,5 @@ class SeleniumManager(multiprocessing.Process):
                     except django.db.utils.IntegrityError as e:
                         print("Can't add these products", *mass)
                         print(e)
-            except Exception as e:
+            except KeyboardInterrupt as e:
                 print(e)
