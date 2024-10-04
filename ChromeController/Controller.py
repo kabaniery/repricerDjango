@@ -5,6 +5,7 @@ import time
 from decimal import Decimal
 
 import requests
+import selenium.common.exceptions as exceptions
 from django.core.files.base import ContentFile
 from lxml import etree
 from selenium.webdriver import ChromeOptions, Chrome
@@ -14,12 +15,13 @@ from scripts.Driver import get_code
 
 
 class SeleniumManager(multiprocessing.Process):
-    def __init__(self, data_queue, force_queue):
+    def __init__(self, data_queue, force_queue, process_it):
         super().__init__()
         self.driver = None
         self.data_queue = data_queue
         self._lock = threading.Lock()
         self.force_queue = force_queue
+        self.process_it = process_it
 
 
 
@@ -62,19 +64,15 @@ class SeleniumManager(multiprocessing.Process):
             return None
         return price
 
-    def run(self):
-        from repricer.models import Client, Product
-        import django.db.utils
-
+    def create_driver(self):
         # Копипаста из Driver
         options = ChromeOptions()
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
-        options.add_argument("--remote-debugging-port=9222")
         from random import randint
         port = randint(9000, 9999)
-        options.add_argument(f"--remote-debugging-port={port}")
+        options.add_argument(f"--remote-debugging-port={self.process_it+9000}")
         options.add_argument("--window-size=1920x1080")
         options.add_argument("--start-maximized")
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -88,6 +86,12 @@ class SeleniumManager(multiprocessing.Process):
 
         # service = Service('/usr/bin/chromedriver')
         self.driver = Chrome(options=options)
+
+    def run(self):
+        from repricer.models import Client, Product
+        import django.db.utils
+
+        self.create_driver()
 
         mass = list()
         it = 0
@@ -139,7 +143,14 @@ class SeleniumManager(multiprocessing.Process):
                     continue
 
                 gray_price = None
-                price = self.find_price(url, self.driver)
+                for i in range(5):
+                    try:
+                        price = self.find_price(url, self.driver)
+                    except exceptions.TimeoutException:
+                        print("Timeout")
+                        self.create_driver()
+                        price = self.find_price(url, self.driver)
+
 
                 if price is None:
                     continue
@@ -149,7 +160,8 @@ class SeleniumManager(multiprocessing.Process):
                 else:
                     product.gray_price = price
                 if product.offer_id == '797320':
-                    print('test2 started')
+                    print('get price -', product.price)
+                #print(product.name, "price: ", product.price)
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 10:
                         from repricer.views import changing_price

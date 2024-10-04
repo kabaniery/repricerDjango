@@ -14,6 +14,8 @@ from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
 
 def is_old_price_correct(old_price, price):
+    if old_price == 0:
+        return True
     if price < 400:
         return old_price - price > 20
     elif price < 10000:
@@ -43,11 +45,11 @@ def changing_price(client: Client, products, last_time=False):
             old_green = int(float(products[item['offer_id']][0]))
             new_price = int(new_green * fact_price / old_green)
             if item['offer_id'] == '797320':
-                print("test started")
-            if is_old_price_correct(int(item['price']['old_price']), new_price):
+                print('setted price -', new_price)
+            if is_old_price_correct(float(item['price']['old_price']), new_price):
                 old_price = item['price']['old_price']
             else:
-                old_price = str(int(item['price']['old_price'] * new_price / fact_price))
+                old_price = str(int(float(item['price']['old_price']) * new_price / fact_price))
             actual_data = {
                 'auto_action_enabled': 'UNKNOWN',
                 'currency_code': item['price']['currency_code'],
@@ -66,11 +68,14 @@ def changing_price(client: Client, products, last_time=False):
                                  json=new_data)
         if response.status_code == 200:
             if last_time:
-                for key, value in products:
-                    product = Product.objects.get(shop=client, offer_id=key)
-                    product.price = value
-                    product.save()
-                return "Ok"
+                try:
+                    for key, value in products:
+                        product = Product.objects.get(shop=client, offer_id=key)
+                        product.price = value[1]
+                        product.save()
+                    return "Ok"
+                except ValueError:
+                    print(products)
             manager = Manager.get_instance()
             time.sleep(3)
             for key, value in products.items():
@@ -157,7 +162,7 @@ def change_price(request):
             if old_val[key] != value:
                 product = Product.objects.get(shop=client, offer_id=key)
                 new_gray_price = product.gray_price / product.price * int(float(value))
-                editing_orders[key] = (old_val[key], value, new_gray_price)
+                editing_orders[key] = [old_val[key], value, new_gray_price]
         if len(editing_orders.keys()) == 0:
             messages.warning(request, "Нет цен для замены")
         else:
@@ -231,7 +236,7 @@ def load_from_file(request):
                 product.needed_price = price
                 updated_products.append(product)
             except Exception:
-                print("can't find product ")
+                #print("can't find product ") TODO: прописать в файл
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]

@@ -53,7 +53,7 @@ class Manager(multiprocessing.Process):
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
         django.setup()
         from repricer.models import Client, Product
-        self.threads = [SeleniumManager(self.putQueue, self.forceQueue) for _ in range(self.count)]
+        self.threads = [SeleniumManager(self.putQueue, self.forceQueue, i) for i in range(self.count)]
         for thread in self.threads:
             thread.start()
         while True:
@@ -65,6 +65,7 @@ class Manager(multiprocessing.Process):
                         if thread.is_alive():
                             thread.terminate()
                     return
+            print('start repricing')
             ctime = timezone.now()
             clients = Client.objects.all()
             for client in clients:

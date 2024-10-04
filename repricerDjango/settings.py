@@ -36,11 +36,12 @@ SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'www.repiser.ru'
+    '127.0.0.1',
+    'localhost'
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'http://www.repiser.ru',
-    'https://www.repiser.ru'
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
 ]
 
 # Application definition
