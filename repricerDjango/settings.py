@@ -33,14 +33,17 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
-    'www.repiser.ru'
+    'www.repiser.ru',
+    'repiser.ru'
 ]
 CSRF_TRUSTED_ORIGINS = [
     'http://www.repiser.ru',
     'https://www.repiser.ru',
+    'http://repiser.ru',
+    'https://repiser.ru',
 ]
 
 # Application definition
