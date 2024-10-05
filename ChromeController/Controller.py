@@ -125,7 +125,8 @@ class SeleniumManager(multiprocessing.Process):
                 if not self.data_queue.empty():
                     try:
                         client, product, url, new_price = self.data_queue.get(timeout=3)
-                    except Exception: #TODO:
+                    except Exception:
+                        self.logger.info("Empty queue...")
                         time.sleep(3)
                         continue
                 else:
