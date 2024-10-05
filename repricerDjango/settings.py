@@ -150,3 +150,54 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+
+# Logging
+LOG_DIR = Path(BASE_DIR) / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname}::{asctime}::{module}->{message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}->{message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'django.log'),
+            'formatter': 'verbose',
+        },
+        'process_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'process.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'parallel_process': {
+            'handlers': ['process_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

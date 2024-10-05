@@ -1,3 +1,4 @@
+import logging
 import time
 
 import openpyxl
@@ -93,7 +94,7 @@ def register_view(request):
             login(request, new_client)
             return redirect('index')
         else:
-            print(result['message'])
+            logging.getLogger("django").error("Can't register user:", result['message'])
             messages.error(request, result['message'])
             return render(request, 'form_template.html', {'form': RegisterForm(), 'form_type': "Регистрация"})
     else:
@@ -177,7 +178,7 @@ def load_from_ozon(request):
         all_data = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=header, json=body)
         if all_data.status_code == 200:
             manager = Manager.get_instance()
-            print("Overall size is", len(all_data.json()['result']['items']))
+            logging.getLogger("django").info(f"Overall size of parsing shop of user {client.username} is {len(all_data.json()['result']['items'])}")
             for item in all_data.json()['result']['items']:
                 manager.add_product(client.username, client.api_key, item['offer_id'])
         return HttpResponse("Success", status=200)
@@ -220,7 +221,7 @@ def load_from_file(request):
                 product.needed_price = price
                 updated_products.append(product)
             except Exception:
-                print("can't find product ")
+                logging.getLogger("django").warning(f"Can't find product {offer_id} of shop {client.username}")
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]

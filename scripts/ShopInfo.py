@@ -1,3 +1,4 @@
+import logging
 import re
 import threading
 
@@ -30,8 +31,7 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
         result['shop_name'] = shop_name
         result['status'] = True
     except Exception as e:
-        print(e)
-        print(current_driver.title)
+        logging.getLogger("django").error(f"Can't parse shop info for shop {current_driver.title} with error {e}")
         result['status'] = False
         result['message'] = e
     current_driver.close()

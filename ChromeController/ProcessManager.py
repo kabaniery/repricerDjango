@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import time
 from datetime import timezone
@@ -19,9 +20,9 @@ class Manager(multiprocessing.Process):
         print("shutting down manager")
         if Manager._singleton is not None:
             singleton = Manager._singleton
+            singleton.logger.warning("Shutting down manager")
             for thread in singleton.threads:
                 thread.terminate()
-
 
     @staticmethod
     def get_instance():
@@ -39,14 +40,14 @@ class Manager(multiprocessing.Process):
         self.count = count_process
         self.threads = list()
         self.forceQueue = multiprocessing.Manager().Queue()
+        self.logger = logging.getLogger("parallel_process")
 
     def __del__(self):
-        print("Manager stopped")
+        self.logger.warning("process stopped?")
 
     def run(self):
         self.started = True
-        print("main cycle started")
-        print(self.count)
+        self.logger.info(f"Process started with {self.count} threads")
         display = Display(visible=False, size=(1920, 1080))
         display.start()
         import os
@@ -60,7 +61,7 @@ class Manager(multiprocessing.Process):
             for thread in self.threads:
                 if not thread.is_alive():
                     display.stop()
-                    print("display stopped")
+                    self.logger.warning("display stopped")
                     for thread in self.threads:
                         if thread.is_alive():
                             thread.terminate()
@@ -74,7 +75,8 @@ class Manager(multiprocessing.Process):
                     products = Product.objects.filter(shop=client)
                     for product in products:
                         if product.needed_price is not None and product.needed_price > 0:
-                            self.correct_product(client.username, client.api_key, product.offer_id, product.needed_price)
+                            self.correct_product(client.username, client.api_key, product.offer_id,
+                                                 product.needed_price)
 
             time.sleep(120)
 
@@ -113,7 +115,7 @@ class Manager(multiprocessing.Process):
             time.sleep(0.5)
             item_data = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
             if item_data.status_code != 200:
-                print("Error on request product/info with offerId", body['offer_id'], ". Text:", item_data.text)
+                self.logger.critical(f"Error on request product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
 
         from repricer.models import Client, Product
@@ -138,7 +140,7 @@ class Manager(multiprocessing.Process):
             time.sleep(0.5)
             item_data = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
             if item_data.status_code != 200:
-                print("Error on request product/info with offerId", body['offer_id'], ". Text:", item_data.text)
+                self.logger.critical(f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
 
         from repricer.models import Client, Product
