@@ -1,3 +1,4 @@
+import logging
 import time
 
 from selenium import webdriver
@@ -46,10 +47,10 @@ def check_block(driver: webdriver.Chrome):
             time.sleep(1)
             return driver.page_source
         except Exception as e:
-            print(e)
+            logging.getLogger("django").error(f"Can't pass Antibot in page {driver.current_url}")
             global it
             it += 1
-            with open(f"{it}.html", "w") as file:
+            with open(f"logs/{it}.html", "w") as file:
                 file.write(driver.page_source)
     return None
 

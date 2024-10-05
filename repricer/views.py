@@ -1,5 +1,5 @@
 import time
-
+import logging
 import openpyxl
 import requests
 from django.contrib import messages
@@ -109,7 +109,7 @@ def register_view(request):
             login(request, new_client)
             return redirect('index')
         else:
-            print(result['message'])
+            logging.getLogger("django").error("Can't register user:", result['message'])
             messages.error(request, result['message'])
             return render(request, 'form_template.html', {'form': RegisterForm(), 'form_type': "Регистрация"})
     else:
@@ -236,7 +236,7 @@ def load_from_file(request):
                 product.needed_price = price
                 updated_products.append(product)
             except Exception:
-                #print("can't find product ") TODO: прописать в файл
+                print("can't find product ")
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]

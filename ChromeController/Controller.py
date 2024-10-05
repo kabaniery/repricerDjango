@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import re
 import threading
@@ -21,6 +22,7 @@ class SeleniumManager(multiprocessing.Process):
         self.data_queue = data_queue
         self._lock = threading.Lock()
         self.force_queue = force_queue
+        self.logger = logging.getLogger("parallel_process")
         self.process_it = process_it
 
 
@@ -38,29 +40,25 @@ class SeleniumManager(multiprocessing.Process):
                 price_container = parent_elements[1].xpath(
                     "./div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/span")[0]
             elif parent_length == 6:
-                #Элемент с data-widget = webPrice
+                # Элемент с data-widget = webPrice
                 element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath(
                     "./div[1]/div[1]/div[1]/div[1]")[0]
                 # Значит товар есть
                 price_container = \
                     element.xpath(".//span[1]")
                 if len(price_container) == 0:
-                    print("Error: can't find price on page", url)
+                    self.logger.error(f"Can't find price on page {url}")
                     return None
                 else:
                     price_container = price_container[0]
                 if len(price_container) > 0:
                     price_container = price_container.xpath(".//span[1]")[0]
-                    gray_price_container = element.xpath("./div[1]/div[2]//span[1]")[0]
-                    gray_price = re.sub(r'\D', '', gray_price_container.text)
             else:
-                print("Can't parse page", driver.title)
+                self.logger.error(f"Can't find price on page {url}")
                 return None
             price = re.sub(r'\D', '', price_container.text)
         except Exception as e:
-            print(e)
-            with open("1.html", 'w') as file:
-                file.write(page_source)
+            self.logger.critical(f"Unexpected error while finding price on page {url} with error {e}")
             return None
         return price
 
@@ -101,12 +99,10 @@ class SeleniumManager(multiprocessing.Process):
                     shop_url, client_id = self.force_queue.get()
                     try:
                         code = get_code(self.driver, shop_url)
-                        with open("temp.html", "w") as f:
-                            f.write(code)
                         html = etree.HTML(code)
                         parental_object = \
-                        html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
-                                   "1]/div[1]/div[1]")[0]
+                            html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
+                                       "1]/div[1]/div[1]")[0]
                         image_object = parental_object.xpath("./div[1]/div[1]")[0]
                         style_value = image_object.get('style')
                         background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
@@ -120,8 +116,7 @@ class SeleniumManager(multiprocessing.Process):
                         client.shop_avatar.save(filename, image_content)
                         client.save()
                     except Exception as e:
-                        print(e)
-                        print(self.driver.title)
+                        self.logger.error(f"Can't process force queue on page {self.driver.current_url}")
                     continue
                 client = None
                 product = None
@@ -130,7 +125,7 @@ class SeleniumManager(multiprocessing.Process):
                 if not self.data_queue.empty():
                     try:
                         client, product, url, new_price = self.data_queue.get(timeout=3)
-                    except Exception:
+                    except Exception: #TODO:
                         time.sleep(3)
                         continue
                 else:
@@ -151,7 +146,7 @@ class SeleniumManager(multiprocessing.Process):
                     try:
                         price = self.find_price(url, self.driver)
                     except exceptions.TimeoutException:
-                        print("Timeout")
+                        self.logger.warning("Timeout")
                         self.create_driver()
                         price = self.find_price(url, self.driver)
 
@@ -166,10 +161,13 @@ class SeleniumManager(multiprocessing.Process):
                 if product.offer_id == '797320':
                     print('get price -', product.price)
                 #print(product.name, "price: ", product.price)
+                product.gray_price = price
+                self.logger.info(f"product {product.name}; price {product.price}")
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 10:
                         from repricer.views import changing_price
-                        changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]}, last_time=True)
+                        changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]},
+                                       last_time=True)
                     product.save()
                     continue
                 mass.append(product)
@@ -182,7 +180,6 @@ class SeleniumManager(multiprocessing.Process):
                         self._lock.release()
                         mass = list()
                     except django.db.utils.IntegrityError as e:
-                        print("Can't add these products", *mass)
-                        print(e)
-            except KeyboardInterrupt as e:
-                print(e)
+                        self.logger.warning(f"Can't add these products {mass} because of {e}")
+            except KeyboardInterrupt:
+                self.logger.warning("Keyboard Interrup")
