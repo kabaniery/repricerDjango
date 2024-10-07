@@ -36,6 +36,8 @@ SECRET_KEY = 'django-insecure-7%%u&y)7gx6_r9zf4a#7j7kx^(jbt#ml5!t1bw#gsly&6it+r)
 DEBUG = False
 
 ALLOWED_HOSTS = [
+    '62.109.8.224',
+    '127.0.0.1',
     'www.repiser.ru',
     'repiser.ru'
 ]

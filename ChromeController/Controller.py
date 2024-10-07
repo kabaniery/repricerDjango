@@ -160,6 +160,7 @@ class SeleniumManager(multiprocessing.Process):
                 else:
                     product.gray_price = price
                 if product.offer_id == '830930':
+                    self.logger.info(f"Target price: {product.price}")
                     print('get price -', product.price)
                 #print(product.name, "price: ", product.price)
                 product.gray_price = price
