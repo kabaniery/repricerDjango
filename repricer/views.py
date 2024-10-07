@@ -44,7 +44,7 @@ def changing_price(client: Client, products, last_time=False):
             fact_price = int(float(item['price']['price']))
             old_green = int(float(products[item['offer_id']][0]))
             new_price = int(new_green * fact_price / old_green)
-            if item['offer_id'] == '797320':
+            if item['offer_id'] == '830930':
                 print('setted price -', new_price)
             if is_old_price_correct(float(item['price']['old_price']), new_price):
                 old_price = item['price']['old_price']
@@ -69,12 +69,13 @@ def changing_price(client: Client, products, last_time=False):
         if response.status_code == 200:
             if last_time:
                 try:
-                    for key, value in products:
+                    for key, value in products.items():
                         product = Product.objects.get(shop=client, offer_id=key)
                         product.price = value[1]
                         product.save()
                     return "Ok"
-                except ValueError:
+                except ValueError as e:
+                    print(e)
                     print(products)
             manager = Manager.get_instance()
             time.sleep(3)

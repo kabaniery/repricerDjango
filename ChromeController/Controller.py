@@ -159,7 +159,7 @@ class SeleniumManager(multiprocessing.Process):
                     product.gray_price = Decimal(gray_price)
                 else:
                     product.gray_price = price
-                if product.offer_id == '797320':
+                if product.offer_id == '830930':
                     print('get price -', product.price)
                 #print(product.name, "price: ", product.price)
                 product.gray_price = price
