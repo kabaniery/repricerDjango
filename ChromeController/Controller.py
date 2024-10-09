@@ -28,12 +28,18 @@ class SeleniumManager(multiprocessing.Process):
 
 
     def find_price(self, url, driver):
-        page_source = get_code(driver, url, delay=0.0)
+        try:
+            page_source = get_code(driver, url, delay=0.0)
+        except Exception as e:
+            self.logger.error(f"Can't get page with exception {e}")
+            self.create_driver()
+            time.sleep(1)
+            page_source = get_code(self.driver, url, delay=0.0)
+        finally:
+            self.logger.info("Error complete successfully")
         root = etree.HTML(page_source)
         parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
         parent_length = len(parent_elements)
-        price_container = None
-        gray_price = None
         try:
             if parent_length == 2:
                 # Значит товар не доставляется или не найден
