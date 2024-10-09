@@ -35,7 +35,6 @@ class SeleniumManager(multiprocessing.Process):
             self.create_driver()
             time.sleep(1)
             page_source = get_code(self.driver, url, delay=0.0)
-        finally:
             self.logger.info("Error complete successfully")
         root = etree.HTML(page_source)
         parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
