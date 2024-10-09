@@ -74,7 +74,7 @@ class Manager(multiprocessing.Process):
                     client.last_update = ctime
                     client.save()
                 print("Passed time:", (ctime - client.last_update).total_seconds())
-                if (ctime - client.last_update).total_seconds() > 3600:
+                if (ctime - client.last_update).total_seconds() > 600:
                     client.last_update = ctime
                     client.save()
                     products = Product.objects.filter(shop=client)

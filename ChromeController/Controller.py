@@ -171,7 +171,7 @@ class SeleniumManager(multiprocessing.Process):
                 product.gray_price = price
                 self.logger.info(f"product {product.name}; price {product.price}")
                 if new_price is not None:
-                    if abs(float(price) - float(new_price)) > 10:
+                    if abs(float(price) - float(new_price)) > 0:
                         from repricer.views import changing_price
                         changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]},
                                        last_time=True)
