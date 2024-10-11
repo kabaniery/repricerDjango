@@ -19,6 +19,7 @@ class Manager(multiprocessing.Process):
     def shutdown():
         print("shutting down manager")
         if Manager._singleton is not None:
+            Manager._singleton.is_stopped = True
             singleton = Manager._singleton
             singleton.logger.warning("Shutting down manager")
             for thread in singleton.threads:
@@ -41,6 +42,7 @@ class Manager(multiprocessing.Process):
         self.threads = list()
         self.forceQueue = multiprocessing.Manager().Queue()
         self.logger = logging.getLogger("parallel_process")
+        self.is_stopped = False
 
     def __del__(self):
         self.logger.warning("process stopped?")
@@ -58,14 +60,20 @@ class Manager(multiprocessing.Process):
         for thread in self.threads:
             thread.start()
         while True:
+            it = 0
             for thread in self.threads:
                 if not thread.is_alive():
+                    if not self.is_stopped:
+                        self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, it)
+                        self.threads[it].start()
+                        continue
                     display.stop()
                     self.logger.warning("display stopped")
                     for thread in self.threads:
                         if thread.is_alive():
                             thread.terminate()
                     return
+                it += 1
             print('start repricing')
             ctime = timezone.now()
             clients = Client.objects.all()
