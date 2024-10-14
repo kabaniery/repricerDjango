@@ -162,8 +162,7 @@ def change_price(request):
         for key, value in new_val.items():
             if old_val[key] != value:
                 product = Product.objects.get(shop=client, offer_id=key)
-                new_gray_price = product.gray_price / product.price * int(float(value))
-                editing_orders[key] = [old_val[key], value, new_gray_price]
+                editing_orders[key] = [old_val[key], value, 0]
         if len(editing_orders.keys()) == 0:
             messages.warning(request, "Нет цен для замены")
         else:
