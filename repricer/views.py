@@ -234,6 +234,8 @@ def load_from_file(request):
                 price = int(row_values[1])
             except ValueError:
                 continue
+            except TypeError:
+                continue
             try:
                 product = Product.objects.get(shop=client, offer_id=offer_id)
                 product.needed_price = price
