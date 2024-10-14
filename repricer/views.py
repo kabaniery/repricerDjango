@@ -224,6 +224,8 @@ def load_from_file(request):
         updated_products = list()
         for row in sheet.iter_rows(min_row=2, values_only=True):
             row_values = row[:2]
+            if len(row_values) < 2:
+                continue
             offer_id = row_values[0]
             if isinstance(offer_id, float):
                 offer_id = str(int(offer_id))
