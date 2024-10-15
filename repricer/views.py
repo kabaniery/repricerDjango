@@ -194,8 +194,12 @@ def load_from_ozon(request):
         if all_data.status_code == 200:
             manager = Manager.get_instance()
             print("Overall size is", len(all_data.json()['result']['items']))
+            last_offer_id = None
             for item in all_data.json()['result']['items']:
                 manager.add_product(client.username, client.api_key, item['offer_id'])
+                last_offer_id = item['offer_id']
+            if last_offer_id is not None:
+                manager.last_product = last_offer_id
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
@@ -253,3 +257,9 @@ def load_from_file(request):
 def log_out(request):
     logout(request)
     return redirect('login')
+
+
+@login_required
+def queue_ended(request):
+    client = request.user
+    assert isinstance(client, Client)

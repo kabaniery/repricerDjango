@@ -177,6 +177,10 @@ class SeleniumManager(multiprocessing.Process):
                                        last_time=True)
                     product.save()
                     continue
+                if client.product_blocked and client.last_product == product.offer_id:
+                    client.last_product = -1
+                    client.product_blocked = False
+                    client.save()
                 mass.append(product)
                 it += 1
                 scripts.Driver.it = it
