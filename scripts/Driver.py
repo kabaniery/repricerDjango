@@ -59,6 +59,10 @@ def get_code(driver: webdriver.Chrome, site, delay=0.5, exec_script=None, exec_t
     driver.get(site)
 
     res = check_block(driver)
+    if driver.title == "Один момент…":
+        while driver.title == "Один момент…":
+            pass
+        res = driver.page_source
     if exec_script is not None:
         time.sleep(delay / 2)
         for i in range(exec_times):

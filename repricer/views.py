@@ -263,3 +263,4 @@ def log_out(request):
 def queue_ended(request):
     client = request.user
     assert isinstance(client, Client)
+    return JsonResponse({'answer': client.product_blocked})

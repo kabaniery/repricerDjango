@@ -95,7 +95,7 @@ class SeleniumManager(multiprocessing.Process):
         import django.db.utils
 
         self.create_driver()
-
+        print("Controller", self.process_it, "started")
         mass = list()
         it = 0
         while True:

@@ -50,8 +50,8 @@ class Manager(multiprocessing.Process):
     def run(self):
         self.started = True
         self.logger.info(f"Process started with {self.count} threads")
-        display = Display(visible=False, size=(1920, 1080))
-        display.start()
+        #display = Display(visible=False, size=(1920, 1080))
+        #display.start()
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
         django.setup()
@@ -67,7 +67,7 @@ class Manager(multiprocessing.Process):
                         self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, it)
                         self.threads[it].start()
                         continue
-                    display.stop()
+                    #display.stop()
                     self.logger.warning("display stopped")
                     for thread in self.threads:
                         if thread.is_alive():
