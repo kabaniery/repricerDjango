@@ -1,6 +1,7 @@
 import logging
 import time
 
+import undetected_chromedriver
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -28,7 +29,7 @@ def get_options():
 
 def get_driver():
     # service = Service('/usr/bin/chromedriver')
-    current_driver = webdriver.Chrome(options=get_options())
+    current_driver = undetected_chromedriver.Chrome(headless=False, browser_executable_path="C:/Program Files/Google/Chrome Beta/Application/chrome.exe")
     return current_driver
 
 
