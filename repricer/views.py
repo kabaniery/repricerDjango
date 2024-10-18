@@ -13,6 +13,7 @@ from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
 
+
 def is_old_price_correct(old_price, price):
     if old_price == 0:
         return True
@@ -23,7 +24,8 @@ def is_old_price_correct(old_price, price):
     else:
         return old_price - price > 500
 
-#products: {'offer-id': (old_price, new_price, new_gray_price)}
+
+# products: {'offer-id': (old_price, new_price, new_gray_price)}
 def changing_price(client: Client, products, last_time=False):
     headers = {
         'Client-Id': client.username,
@@ -92,7 +94,8 @@ def start_page(request):
     try:
         return render(request, 'index.html', {'avatar_path': client.shop_avatar.url, 'shop_name': client.shop_name})
     except ValueError:
-        return render(request, 'index.html', {'avatar_path': '', 'shop_name': client.shop_name}) #TODO: Проставить путь к статическому аватару
+        return render(request, 'index.html', {'avatar_path': '',
+                                              'shop_name': client.shop_name})  # TODO: Проставить путь к статическому аватару
 
 
 def register_view(request):
@@ -191,6 +194,7 @@ def load_from_ozon(request):
         }
 
         all_data = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=header, json=body)
+        logging.getLogger("django").debug(all_data.text)
         if all_data.status_code == 200:
             manager = Manager.get_instance()
             print("Overall size is", len(all_data.json()['result']['items']))
@@ -211,6 +215,7 @@ def get_product_count(request):
     assert isinstance(client, Client)
     products = Product.objects.filter(shop=client)
     return JsonResponse({'count': products.count()})
+
 
 @login_required
 def load_from_file(request):
