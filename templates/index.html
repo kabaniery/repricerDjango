@@ -5,7 +5,37 @@
     <meta charset="UTF-8">
     <title>Repricer</title>
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
-    <script>
+
+</head>
+<body>
+    <div class="body_main">
+		<div class="image_block" onclick="location.href = '{% url 'get_data'  %}'">
+            <img src='{{ avatar_path }}' alt='ошибка прогрузки'>
+            <div class='shop_info'><h3>{{ shop_name }}</h3></div>
+		</div>
+		<div class="data_place">
+            <form action="{% url 'load_csv' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+			    <div class="data_block">
+				    <h5>Загрузить таблицу с фактическими ценами:</h5>
+				    <div style="border: 2px solid #0044FF; border-radius: 5px 20px 20px 5px; display: inline-block;">
+                        <input type="file" id="csv_input" name="csv_input" accept=".xlsx">
+				    <button type="submit">Загрузить</button></div>
+			    </div>
+            </form>
+			<div class="data_block">
+				<h5>Хотите заполнить её вручную?</h5>
+                <!--TODO: добавить страницу-->
+				<button onclick="window.location.href= 'form_upload.php'">Открыть форму загрузки данных</button>
+			</div>
+			<div class="data_block">
+				<h5>Подгрузить данные из открытых товаров магазина</h5>
+				<button type="button" id="ozon_load" onclick="ozon_loader()">Загрузить</button>
+			</div>
+		</div>
+	</div>
+	<div class="edit_shop"><button onclick="window.location.href='{% url 'logout' %}'">Поменять магазин</button></div>
+<script>
         function ozon_loader() {
     fetch("{% url 'load_ozon'%}", {
         method: 'POST',
@@ -41,34 +71,5 @@
     }
     window.onload = check_work;
     </script>
-</head>
-<body>
-    <div class="body_main">
-		<div class="image_block" onclick="location.href = '{% url 'get_data'  %}'">
-            <img src='{{ avatar_path }}' alt='ошибка прогрузки'>
-            <div class='shop_info'><h3>{{ shop_name }}</h3></div>
-		</div>
-		<div class="data_place">
-            <form action="{% url 'load_csv' %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-			    <div class="data_block">
-				    <h5>Загрузить таблицу с фактическими ценами:</h5>
-				    <div style="border: 2px solid #0044FF; border-radius: 5px 20px 20px 5px; display: inline-block;">
-                        <input type="file" id="csv_input" name="csv_input" accept=".xlsx">
-				    <button type="submit">Загрузить</button></div>
-			    </div>
-            </form>
-			<div class="data_block">
-				<h5>Хотите заполнить её вручную?</h5>
-                <!--TODO: добавить страницу-->
-				<button onclick="window.location.href= 'form_upload.php'">Открыть форму загрузки данных</button>
-			</div>
-			<div class="data_block">
-				<h5>Подгрузить данные из открытых товаров магазина</h5>
-				<button type="button" id="ozon_load" onclick="ozon_loader()">Загрузить</button>
-			</div>
-		</div>
-	</div>
-	<div class="edit_shop"><button onclick="window.location.href='{% url 'logout' %}'">Поменять магазин</button></div>
 </body>
 </html>
