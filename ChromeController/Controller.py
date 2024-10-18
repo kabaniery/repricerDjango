@@ -88,7 +88,7 @@ class SeleniumManager(multiprocessing.Process):
         options.add_argument("--enable-javascript")
 
         # service = Service('/usr/bin/chromedriver')
-        self.driver = Chrome(options=options)
+        self.driver = scripts.Driver.get_driver()
 
     def run(self):
         from repricer.models import Client, Product
@@ -96,6 +96,7 @@ class SeleniumManager(multiprocessing.Process):
 
         self.create_driver()
         print("Controller", self.process_it, "started")
+        self.logger.info(f"Controller {self.process_it} started")
         mass = list()
         it = 0
         while True:
