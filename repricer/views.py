@@ -175,12 +175,18 @@ def change_price(request):
 
 @login_required
 def load_from_ozon(request):
+    print("a")
     client = request.user
+    print("b")
     assert isinstance(client, Client)
+    print("c")
     if True:
+        print("d")
         client.product_blocked = True
         client.save()
+        print("e")
         Product.objects.filter(shop=client).delete()
+        print("f")
         header = {
             "Client-Id": client.username,
             'Api-Key': client.api_key
