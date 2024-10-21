@@ -9,6 +9,8 @@ class RepricerConfig(AppConfig):
     manager = None
 
     def ready(self):
+        from repricer.models import Client
+        Client.objects.update(product_blocked=False)
         print("Django started")
 
 

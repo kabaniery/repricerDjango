@@ -12,6 +12,7 @@ from django.shortcuts import render, redirect
 from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
+from scripts.Driver import get_request
 
 
 def is_old_price_correct(old_price, price):
@@ -37,7 +38,7 @@ def changing_price(client: Client, products, last_time=False):
         },
         'limit': len(products.keys())
     }
-    response = requests.post("https://api-seller.ozon.ru/v4/product/info/prices", headers=headers, json=data)
+    response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
     if response.status_code == 200:
         prices = list()
         for item in response.json()['result']['items']:
@@ -66,8 +67,7 @@ def changing_price(client: Client, products, last_time=False):
         new_data = {
             'prices': prices
         }
-        response = requests.post('https://api-seller.ozon.ru/v1/product/import/prices', headers=headers,
-                                 json=new_data)
+        response = get_request('https://api-seller.ozon.ru/v1/product/import/prices', headers, new_data)
         if response.status_code == 200:
             if last_time:
                 try:
@@ -199,7 +199,7 @@ def load_from_ozon(request):
             'limit': 1000
         }
         print("g")
-        all_data = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=header, json=body)
+        all_data = get_request("https://api-seller.ozon.ru/v2/product/list", header, body)
         print(all_data.text)
         logging.getLogger("django").info(all_data.text)
         if all_data.status_code == 200:

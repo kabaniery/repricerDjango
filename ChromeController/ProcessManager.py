@@ -10,6 +10,7 @@ from pyvirtualdisplay import Display
 
 from ChromeController.Controller import SeleniumManager
 from scripts.LanguageAdapting import generate_ozon_name
+from scripts.Driver import get_request
 
 
 class Manager(multiprocessing.Process):
@@ -103,7 +104,7 @@ class Manager(multiprocessing.Process):
             'filter': dict(),
             'limit': 1
         }
-        response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
+        response = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
         result['status'] = True
         if response.status_code == 200:
             self.forceQueue.put((shop_url, client_id))
@@ -122,13 +123,14 @@ class Manager(multiprocessing.Process):
         body = {
             'offer_id': offer_id
         }
-        response = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+        response = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
 
         if response.status_code != 200 or response.json()['result'] is None:
             time.sleep(0.5)
-            item_data = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+            item_data = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
             if item_data.status_code != 200:
-                self.logger.critical(f"Error on request product/info with offerId {body['offer_id']}. Text: {item_data.text}")
+                self.logger.critical(
+                    f"Error on request product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
 
         from repricer.models import Client, Product
@@ -147,13 +149,14 @@ class Manager(multiprocessing.Process):
         body = {
             'offer_id': offer_id
         }
-        response = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+        response = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
 
         if response.status_code != 200 or response.json()['result'] is None:
             time.sleep(0.5)
-            item_data = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=body)
+            item_data = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
             if item_data.status_code != 200:
-                self.logger.critical(f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
+                self.logger.critical(
+                    f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
 
         from repricer.models import Client, Product

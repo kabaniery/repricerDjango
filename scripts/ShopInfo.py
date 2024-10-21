@@ -7,7 +7,7 @@ from django.core.files.base import ContentFile
 from lxml import etree
 from selenium import webdriver
 
-from scripts.Driver import get_driver, get_code
+from scripts.Driver import get_driver, get_code, get_request
 
 
 # ВОЗВРАЩАЕТ ДАННЫЕ В UTF-8
@@ -50,7 +50,7 @@ def get_shop_infos(client_id, api_key, shop_url):
         'filter': dict(),
         'limit': 1
     }
-    response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=body)
+    response = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
     url_thread.join()
     if response.status_code == 200:
         if result['status']:
