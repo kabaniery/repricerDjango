@@ -34,16 +34,14 @@ sudo chmod +x /usr/local/bin/chromedriver
 rm chromedriver_linux64.zip
 
 # Создаем виртуальное окружение и активируем его
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 
 # Устанавливаем зависимости из requirements.txt
-python -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # Выполняем команды управления Django
-python manage.py collectstatic --noinput
-python manage.py migrate
+python3 manage.py collectstatic --noinput
+python3 manage.py migrate
 
-# Запускаем windowServer.py
-python windowServer.py
 
