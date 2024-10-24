@@ -1,6 +1,7 @@
 import atexit
 
 from django.apps import AppConfig
+from django.db import connection
 
 
 class RepricerConfig(AppConfig):
@@ -9,9 +10,12 @@ class RepricerConfig(AppConfig):
     manager = None
 
     def ready(self):
-        from repricer.models import Client
-        Client.objects.update(product_blocked=False)
-        print("Django started")
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'repricer' AND table_name = 'repricer_client';")
+            if cursor.fetchone()[0] == 1:
+                # ≈сли таблица существует, выполн€ем обновление
+                from .models import Client
+                Client.objects.update(product_blocked=False)
 
 
 from ChromeController.ProcessManager import Manager
