@@ -175,18 +175,12 @@ def change_price(request):
 
 @login_required
 def load_from_ozon(request):
-    print("a")
     client = request.user
-    print("b")
     assert isinstance(client, Client)
-    print("c")
     if True:
-        print("d")
         client.product_blocked = True
         client.save()
-        print("e")
         Product.objects.filter(shop=client).delete()
-        print("f")
         header = {
             "Client-Id": client.username,
             'Api-Key': client.api_key
@@ -198,9 +192,7 @@ def load_from_ozon(request):
                 },
             'limit': 1000
         }
-        print("g")
         all_data = get_request("https://api-seller.ozon.ru/v2/product/list", header, body)
-        print(all_data.text)
         logging.getLogger("django").info(all_data.text)
         if all_data.status_code == 200:
             manager = Manager.get_instance()
