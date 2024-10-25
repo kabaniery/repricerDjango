@@ -39,7 +39,8 @@ ALLOWED_HOSTS = [
     '62.109.8.224',
     '127.0.0.1',
     'www.repiser.ru',
-    'repiser.ru'
+    'repiser.ru',
+    '212.109.196.65'
 ]
 CSRF_TRUSTED_ORIGINS = [
     'http://www.repiser.ru',
