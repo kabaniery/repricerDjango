@@ -25,8 +25,6 @@ class SeleniumManager(multiprocessing.Process):
         self.logger = logging.getLogger("parallel_process")
         self.process_it = process_it
 
-
-
     def find_price(self, url, driver):
         try:
             page_source = get_code(driver, url, delay=0.0)
@@ -75,7 +73,7 @@ class SeleniumManager(multiprocessing.Process):
         options.add_argument("--disable-gpu")
         from random import randint
         port = randint(9000, 9999)
-        options.add_argument(f"--remote-debugging-port={self.process_it+9000}")
+        options.add_argument(f"--remote-debugging-port={self.process_it + 9000}")
         options.add_argument("--window-size=1920x1080")
         options.add_argument("--start-maximized")
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -157,7 +155,6 @@ class SeleniumManager(multiprocessing.Process):
                         self.create_driver()
                         price = self.find_price(url, self.driver)
 
-
                 if price is None:
                     continue
                 product.price = Decimal(price)
@@ -168,7 +165,7 @@ class SeleniumManager(multiprocessing.Process):
                 if product.offer_id == '830930':
                     self.logger.info(f"Target price: {product.price}")
                     print('get price -', product.price)
-                #print(product.name, "price: ", product.price)
+                # print(product.name, "price: ", product.price)
                 product.gray_price = price
                 self.logger.info(f"product {product.name}; price {product.price}")
                 if new_price is not None:
