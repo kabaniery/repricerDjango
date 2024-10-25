@@ -16,6 +16,8 @@ from scripts.Driver import get_code
 
 
 class SeleniumManager(multiprocessing.Process):
+    lock = multiprocessing.Lock()
+
     def __init__(self, data_queue, force_queue, process_it):
         super().__init__()
         self.driver = None
@@ -86,9 +88,9 @@ class SeleniumManager(multiprocessing.Process):
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         options.add_argument("--enable-javascript")
-
-        # service = Service('/usr/bin/chromedriver')
-        self.driver = scripts.Driver.get_driver()
+        with SeleniumManager.lock:
+            # service = Service('/usr/bin/chromedriver')
+            self.driver = scripts.Driver.get_driver()
 
     def run(self):
         from repricer.models import Client, Product
