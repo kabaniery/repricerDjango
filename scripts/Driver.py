@@ -42,8 +42,8 @@ def get_driver():
     windows_path = "C:/Program Files/Google/Chrome Beta/Application/chrome.exe"
     ubuntu_path = "/usr/bin/google-chrome-beta"
     driver_path = "/usr/bin/chromedriver"
-    current_driver = undetected_chromedriver.Chrome(headless=False, browser_executable_path=windows_path,
-                                                    driver_executable_path=None)
+    current_driver = undetected_chromedriver.Chrome(headless=False, browser_executable_path=ubuntu_path,
+                                                    driver_executable_path=driver_path)
     return current_driver
 
 
