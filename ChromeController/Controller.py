@@ -44,8 +44,8 @@ class SeleniumManager(multiprocessing.Process):
                     "./div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/span")[0]
             elif parent_length == 6:
                 # Элемент с data-widget = webPrice
-                element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div")[-1].xpath(
-                    "./div[1]/div[1]/div[1]/div[1]")[0]
+                element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div[1]")[0].xpath(
+                    "./div[1]/div[2]/div[1]/div[1]")[0]
                 # Значит товар есть
                 price_container = \
                     element.xpath(".//span[1]")
@@ -62,6 +62,8 @@ class SeleniumManager(multiprocessing.Process):
             price = re.sub(r'\D', '', price_container.text)
         except Exception as e:
             self.logger.critical(f"Unexpected error while finding price on page {url} with error {e}")
+            with open("broken_page.html", "w") as f:
+                f.write(page_source)
             return None
         return price
 
