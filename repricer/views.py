@@ -249,7 +249,6 @@ def load_from_file(request):
                 product.needed_price = price
                 updated_products.append(product)
             except Exception:
-                print("can't find product ")
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
