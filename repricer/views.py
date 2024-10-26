@@ -248,7 +248,7 @@ def load_from_file(request):
                 product = Product.objects.get(shop=client, offer_id=offer_id)
                 product.needed_price = price
                 updated_products.append(product)
-                print("data added")
+                print("data added", offer_id)
             except Exception as e:
                 continue
             if product.price != price:

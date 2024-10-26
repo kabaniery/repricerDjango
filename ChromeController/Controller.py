@@ -39,11 +39,8 @@ class SeleniumManager(multiprocessing.Process):
                     self.logger.error("Can't save product")
 
     def find_price(self, url, driver):
-        time1 = time.time()
         try:
             page_source = get_code(driver, url, delay=0.0)
-            time2 = time.time()
-            print("Get page time is", time2-time1)
         except Exception as e:
             self.logger.error(f"Can't get page with exception {e}")
             self.create_driver()
@@ -214,4 +211,5 @@ class SeleniumManager(multiprocessing.Process):
                     except django.db.utils.IntegrityError as e:
                         self.logger.warning(f"Can't add these products {mass} because of {e}")
             except KeyboardInterrupt:
-                self.logger.warning("Keyboard Interrup")
+                self.logger.warning("Forced keyboard interrupt")
+        self.logger.critical(f"Thread {self.process_it} was stopped")
