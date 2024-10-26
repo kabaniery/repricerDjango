@@ -11,5 +11,5 @@ if __name__ == "__main__":
     manager = Manager(10, get_queue())
     if not manager.started:
         manager.start()
-    serve(wsgi.application, host='127.0.0.1', port=8000)
+    serve(wsgi.application, host='127.0.0.1', port=8000, connection_limit=300)
 
