@@ -220,14 +220,11 @@ def get_product_count(request):
 def load_from_file(request):
     print("request getted")
     if request.method == 'POST':
-        print("request is post")
         client = request.user
         assert isinstance(client, Client)
-        print("client asserted")
         with open(f"tmp/{client.username}.xlsx", 'wb') as f:
             for chunk in request.FILES['csv_input'].chunks():
                 f.write(chunk)
-        print("file writed")
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
         mass = dict()
@@ -236,10 +233,8 @@ def load_from_file(request):
 
             row_values = row[:2]
             if len(row_values) < 2:
-                print("skipped")
                 continue
             offer_id = row_values[0]
-            print("Offer_id", offer_id)
             if isinstance(offer_id, float):
                 offer_id = str(int(offer_id))
             price = 0
@@ -255,7 +250,6 @@ def load_from_file(request):
                 updated_products.append(product)
                 print("data added")
             except Exception as e:
-                print(e)
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
