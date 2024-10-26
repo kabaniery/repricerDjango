@@ -174,6 +174,7 @@ class SeleniumManager(multiprocessing.Process):
                 for i in range(5):
                     try:
                         price = self.find_price(url, self.driver)
+                        break
                     except exceptions.TimeoutException:
                         self.logger.warning("Timeout")
                         self.create_driver()
