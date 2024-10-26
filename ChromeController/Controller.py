@@ -62,7 +62,7 @@ class SeleniumManager(multiprocessing.Process):
             elif parent_length == 6:
                 # Элемент с data-widget = webPrice
                 element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div[1]")[0].xpath(
-                    "./div[1]/div[2]/div[1]/div[1]")[
+                    "./div[1]/div[@data-widget='webSale']/div[1]/div[1]")[
                     0]  # Заместо div[2] сделать анализ количества дивов https://www.ozon.ru/product/okulyar-sky-watcher-wa-66-6-mm-1-25-1539568637/
                 # Значит товар есть
                 price_container = \
