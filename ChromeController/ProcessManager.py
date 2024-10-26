@@ -147,7 +147,6 @@ class Manager(multiprocessing.Process):
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), None))
 
     def correct_product(self, username, api_key, offer_id, new_price):
-        print("correct started")
         headers = {
             "Client-Id": username,
             'Api-Key': api_key
@@ -164,10 +163,10 @@ class Manager(multiprocessing.Process):
                 self.logger.critical(
                     f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
-        print("product corrected")
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
         product = Product.objects.get(shop=client, offer_id=offer_id)
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
+        print("queue putted")

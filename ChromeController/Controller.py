@@ -165,6 +165,9 @@ class SeleniumManager(multiprocessing.Process):
                 gray_price = None
                 price = None
 
+                if new_price is not None:
+                    print("correct getted")
+
                 for i in range(5):
                     try:
                         price = self.find_price(url, self.driver)
