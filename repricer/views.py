@@ -86,7 +86,6 @@ def changing_price(client: Client, products, last_time=False):
                     print(e)
                     print(products)
             manager = Manager.get_instance()
-            time.sleep(3)
             for key, value in products.items():
                 manager.correct_product(client.username, client.api_key, key, value[1])
         else:
