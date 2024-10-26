@@ -38,6 +38,8 @@ def changing_price(client: Client, products, last_time=False):
         },
         'limit': len(products.keys())
     }
+    print(headers)
+    print(data)
     response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
     print("request getted")
     if response.status_code == 200:
