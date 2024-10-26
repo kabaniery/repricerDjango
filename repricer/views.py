@@ -254,7 +254,8 @@ def load_from_file(request):
                 product.needed_price = price
                 updated_products.append(product)
                 print("data added")
-            except Exception:
+            except Exception as e:
+                print(e)
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
