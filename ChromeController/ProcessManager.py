@@ -169,4 +169,3 @@ class Manager(multiprocessing.Process):
         product = Product.objects.get(shop=client, offer_id=offer_id)
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
-        print("queue putted")
