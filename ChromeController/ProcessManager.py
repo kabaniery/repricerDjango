@@ -27,7 +27,7 @@ class Manager(multiprocessing.Process):
                 thread.terminate()
 
     @staticmethod
-    def get_instance():
+    def get_instance() -> "Manager":
         return Manager._singleton
 
     def __new__(cls, *args, **kwargs):
@@ -136,8 +136,13 @@ class Manager(multiprocessing.Process):
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
-        product = Product(id=f"{client.username}::{json_data['offer_id']}", offer_id=json_data['offer_id'],
-                          shop=client, name=json_data['name'], price=0)
+        if not Product.objects.filter(offer_id=json_data['offer_id']).exists():
+            product = Product(id=f"{client.username}::{json_data['offer_id']}", offer_id=json_data['offer_id'],
+                              shop=client, name=json_data['name'], price=0)
+        else:
+            product = Product.objects.get(offer_id=json_data['offer_id'])
+            product.to_removal = False
+            product.save()
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), None))
 

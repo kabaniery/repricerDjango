@@ -9,7 +9,7 @@ import requests
 import selenium.common.exceptions as exceptions
 from django.core.files.base import ContentFile
 from lxml import etree
-from selenium.webdriver import ChromeOptions, Chrome
+from selenium.webdriver import ChromeOptions
 
 import scripts.Driver
 from scripts.Driver import get_code
@@ -26,6 +26,17 @@ class SeleniumManager(multiprocessing.Process):
         self.force_queue = force_queue
         self.logger = logging.getLogger("parallel_process")
         self.process_it = process_it
+
+    def products_save(self, products):
+        from repricer.models import Product
+        try:
+            Product.objects.bulk_create(products)
+        except Exception:
+            for product in products:
+                try:
+                    product.save()
+                except Exception:
+                    self.logger.error("Can't save product")
 
     def find_price(self, url, driver):
         try:
@@ -47,7 +58,8 @@ class SeleniumManager(multiprocessing.Process):
             elif parent_length == 6:
                 # Элемент с data-widget = webPrice
                 element = parent_elements[3].xpath("./div[3]/div[2]/div[1]/div[1]")[0].xpath(
-                    "./div[1]/div[2]/div[1]/div[1]")[0]
+                    "./div[1]/div[2]/div[1]/div[1]")[
+                    0]  # Заместо div[2] сделать анализ количества дивов https://www.ozon.ru/product/okulyar-sky-watcher-wa-66-6-mm-1-25-1539568637/
                 # Значит товар есть
                 price_container = \
                     element.xpath(".//span[1]")
@@ -139,7 +151,7 @@ class SeleniumManager(multiprocessing.Process):
                         continue
                 else:
                     self._lock.acquire()
-                    Product.objects.bulk_create(mass)
+                    self.products_save(mass)
                     self._lock.release()
                     mass = list()
                     continue
@@ -151,6 +163,7 @@ class SeleniumManager(multiprocessing.Process):
                     continue
 
                 gray_price = None
+                price = None
                 for i in range(5):
                     try:
                         price = self.find_price(url, self.driver)
@@ -168,7 +181,7 @@ class SeleniumManager(multiprocessing.Process):
                     product.gray_price = price
                 if product.offer_id == '830930':
                     self.logger.info(f"Target price: {product.price}")
-                    print('get price -', product.price)
+                    print('getted price -', product.price)
                 # print(product.name, "price: ", product.price)
                 product.gray_price = price
                 self.logger.info(f"product {product.name}; price {product.price}")
@@ -183,13 +196,14 @@ class SeleniumManager(multiprocessing.Process):
                     client.last_product = -1
                     client.product_blocked = False
                     client.save()
+                    Product.objects.filter(shop=client, to_removal=True).delete()
                 mass.append(product)
                 it += 1
                 scripts.Driver.it = it
                 if it % 10 == 0:
                     try:
                         self._lock.acquire()
-                        Product.objects.bulk_create(mass)
+                        self.products_save(mass)
                         self._lock.release()
                         mass = list()
                     except django.db.utils.IntegrityError as e:
