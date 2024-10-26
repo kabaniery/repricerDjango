@@ -247,6 +247,8 @@ def load_from_file(request):
             offer_id = row_values[0]
             if isinstance(offer_id, float):
                 offer_id = str(int(offer_id))
+            else:
+                offer_id = str(offer_id)
             price = 0
             try:
                 price = int(row_values[1])
@@ -258,7 +260,6 @@ def load_from_file(request):
                 product = Product.objects.get(shop=client, offer_id=offer_id)
                 product.needed_price = price
                 updated_products.append(product)
-                print("data added", offer_id)
             except Exception as e:
                 continue
             if product.price != price:
