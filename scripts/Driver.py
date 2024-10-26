@@ -52,14 +52,16 @@ it = 0
 
 def check_block(driver: webdriver.Chrome):
     if "Antibot Challenge Page" == driver.title:
-        time.sleep(3)
+        while "Antibot Challenge Page" == driver.title:
+            pass
     if "Доступ ограничен" == driver.title:
         try:
             elem = driver.find_element(By.TAG_NAME, "html").find_element(By.TAG_NAME, "body").find_element(By.TAG_NAME,
                                                                                                            "div").find_element(
                 By.TAG_NAME, "div")
             elem.find_element(By.CLASS_NAME, "rb").click()
-            time.sleep(1)
+            while "Доступ ограничен" == driver.title:
+                pass
             return driver.page_source
         except Exception as e:
             logging.getLogger("django").error(f"Can't pass Antibot in page {driver.current_url}")

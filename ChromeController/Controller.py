@@ -50,7 +50,6 @@ class SeleniumManager(multiprocessing.Process):
             time.sleep(1)
             page_source = get_code(self.driver, url, delay=0.0)
             self.logger.info("Error complete successfully")
-        time1 = time.time()
         root = etree.HTML(page_source)
         parent_elements = root.xpath("/html/body/div[1]/div[1]/div[1]/div")
         parent_length = len(parent_elements)
@@ -83,8 +82,6 @@ class SeleniumManager(multiprocessing.Process):
             with open("broken_page.html", "w") as f:
                 f.write(page_source)
             return None
-        time2 = time.time()
-        print("Parse page time is", time2 - time1)
         return price
 
     def create_driver(self):
