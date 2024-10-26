@@ -208,7 +208,7 @@ def load_from_ozon(request):
                 manager.add_product(client.username, client.api_key, item['offer_id'])
                 last_offer_id = item['offer_id']
             if last_offer_id is not None:
-                manager.last_product = last_offer_id
+                manager.last_product = str(last_offer_id)
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)

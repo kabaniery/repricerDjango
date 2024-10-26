@@ -198,7 +198,7 @@ class SeleniumManager(multiprocessing.Process):
                     product.save()
                     continue
                 if client.product_blocked and client.last_product == product.offer_id:
-                    client.last_product = -1
+                    client.last_product = "-1"
                     client.product_blocked = False
                     client.save()
                     Product.objects.filter(shop=client, to_removal=True).delete()
