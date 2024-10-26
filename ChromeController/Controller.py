@@ -150,9 +150,10 @@ class SeleniumManager(multiprocessing.Process):
                         time.sleep(3)
                         continue
                 else:
-                    self._lock.acquire()
-                    self.products_save(mass)
-                    self._lock.release()
+                    if len(mass) > 0:
+                        self._lock.acquire()
+                        self.products_save(mass)
+                        self._lock.release()
                     mass = list()
                     continue
                 if client is None or product is None or url is None:

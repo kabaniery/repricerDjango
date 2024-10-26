@@ -10,7 +10,7 @@ class Client(AbstractUser):
     product_blocked = models.BooleanField(default=False)
     api_key = models.CharField(max_length=50)
     last_update = models.DateTimeField(default=timezone.now)
-    last_product = models.CharField(default="-1")
+    last_product = models.CharField(default="-1", null=True, max_length=20)
 
 
 class Product(models.Model):
