@@ -194,7 +194,6 @@ def load_from_ozon(request):
             'limit': 1000
         }
         all_data = get_request("https://api-seller.ozon.ru/v2/product/list", header, body)
-        logging.getLogger("django").info(all_data.text)
         if all_data.status_code == 200:
             manager = Manager.get_instance()
             print("Overall size is", len(all_data.json()['result']['items']))
