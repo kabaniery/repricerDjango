@@ -39,8 +39,10 @@ def changing_price(client: Client, products, last_time=False):
         'limit': len(products.keys())
     }
     response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
+    print("request getted")
     if response.status_code == 200:
         prices = list()
+        print("request ok")
         for item in response.json()['result']['items']:
             # old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
             new_green = int(float(products[item['offer_id']][1]))
@@ -68,7 +70,9 @@ def changing_price(client: Client, products, last_time=False):
             'prices': prices
         }
         response = get_request('https://api-seller.ozon.ru/v1/product/import/prices', headers, new_data)
+        print("edit sended")
         if response.status_code == 200:
+            print("edit ok")
             if last_time:
                 try:
                     for key, value in products.items():
@@ -83,6 +87,10 @@ def changing_price(client: Client, products, last_time=False):
             time.sleep(3)
             for key, value in products.items():
                 manager.correct_product(client.username, client.api_key, key, value[1])
+        else:
+            print("error on edit", response.text)
+    else:
+        print("error", response.text)
     return "Ok"
 
 
