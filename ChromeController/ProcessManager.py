@@ -89,8 +89,7 @@ class Manager(multiprocessing.Process):
                     client.save()
                     products = Product.objects.filter(shop=client)
                     for product in products:
-                        if product.needed_price is not None and product.needed_price > 0:
-                            print(f"Added product {product.offer_id}")
+                        if product.needed_price is not None and product.needed_price > 0 and not product.is_updating:
                             self.correct_product(client.username, client.api_key, product.offer_id,
                                                  product.needed_price)
 
@@ -140,10 +139,11 @@ class Manager(multiprocessing.Process):
         json_data = response.json()['result']
         if not Product.objects.filter(offer_id=json_data['offer_id']).exists():
             product = Product(id=f"{client.username}::{json_data['offer_id']}", offer_id=json_data['offer_id'],
-                              shop=client, name=json_data['name'], price=0)
+                              shop=client, name=json_data['name'], price=0, is_updating=True)
         else:
             product = Product.objects.get(offer_id=json_data['offer_id'])
             product.to_removal = False
+            product.is_updating = True
             product.save()
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), None))
@@ -156,8 +156,9 @@ class Manager(multiprocessing.Process):
         body = {
             'offer_id': offer_id
         }
+        print("get correct")
         response = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
-
+        print("get response")
         if response.status_code != 200 or response.json()['result'] is None:
             time.sleep(0.5)
             item_data = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
@@ -165,9 +166,12 @@ class Manager(multiprocessing.Process):
                 self.logger.critical(
                     f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
+        print("Response ok")
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
         product = Product.objects.get(shop=client, offer_id=offer_id)
+        product.is_updating = True
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
+        print("queue putted with", client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price)

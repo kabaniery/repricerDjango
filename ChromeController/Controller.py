@@ -160,13 +160,11 @@ class SeleniumManager(multiprocessing.Process):
                     it = 0
                     time.sleep(1)
                     continue
-                if not client.product_blocked:
-                    continue
+
+                product.is_updating = False
 
                 gray_price = None
                 price = None
-
-
                 for i in range(5):
                     try:
                         price = self.find_price(url, self.driver)
@@ -177,6 +175,7 @@ class SeleniumManager(multiprocessing.Process):
                         price = self.find_price(url, self.driver)
 
                 if price is None:
+                    product.save()
                     continue
                 product.price = Decimal(price)
                 if gray_price is not None:

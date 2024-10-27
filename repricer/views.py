@@ -187,7 +187,6 @@ def load_from_ozon(request):
         client.product_blocked = True
         client.last_product = None
         client.save()
-        Product.objects.filter(shop=client).delete()
         Product.objects.filter(shop=client).update(to_removal=True)
         header = {
             "Client-Id": client.username,
@@ -208,12 +207,10 @@ def load_from_ozon(request):
             for item in all_data.json()['result']['items']:
                 manager.add_product(client.username, client.api_key, item['offer_id'])
                 last_offer_id = item['offer_id']
-                print(last_offer_id)
             print("Getted last offer id", last_offer_id)
             if last_offer_id is not None:
                 client.last_product = str(last_offer_id)
                 client.save()
-                print(f'setted client {client.username} offer id {last_offer_id}')
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
