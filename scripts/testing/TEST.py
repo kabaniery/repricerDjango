@@ -7,6 +7,7 @@ from selenium import webdriver
 
 from scripts.Driver import get_code, get_driver
 
+
 def get_products():
     headers = {
         'Client-Id': "1267611",
@@ -22,9 +23,10 @@ def get_products():
     response = requests.post("https://api-seller.ozon.ru/v2/product/list", headers=headers, json=data)
     return response.json()['result']
 
-def test_display():
+
+'''def test_display():
     # Создаем виртуальный дисплей
-    display = Display(visible=0, size=(1920, 1080))
+    display = Display(visible=False, size=(1920, 1080))
     display.start()
 
     # Настройка драйвера Chrome
@@ -39,7 +41,7 @@ def test_display():
 
     # Закрываем драйвер и виртуальный дисплей
     driver.quit()
-    display.stop()
+    display.stop()'''
 
 
 def set_price(articul, price):
@@ -59,6 +61,7 @@ def set_price(articul, price):
     }
     response = requests.post("https://api-seller.ozon.ru/v1/product/import/prices", headers=headers, json=data)
     print(response.text)
+
 
 def page_parser():
     driver = get_driver()
@@ -98,5 +101,18 @@ def page_parser():
     return price
 
 
+def display_product(client_id, api_key, offer_id):
+    headers = {
+        'Client-Id': str(client_id),
+        'Api-Key': api_key
+    }
+    data = {
+        'offer_id': offer_id
+    }
+
+    response = requests.post("https://api-seller.ozon.ru/v2/product/info", headers=headers, json=data)
+    print(response.text)
+
+
 if __name__ == '__main__':
-    print(get_products())
+    display_product("1590790", "88f2b763-3566-484e-a402-fcbb5daee5fb", "400t")

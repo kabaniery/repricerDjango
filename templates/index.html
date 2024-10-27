@@ -34,7 +34,10 @@
 			</div>
 		</div>
 	</div>
-	<div class="edit_shop"><button onclick="window.location.href='{% url 'logout' %}'">Поменять магазин</button></div>
+	<div class="edit_shop">
+        <button onclick="window.location.href='{% url 'logout' %}'">Поменять магазин</button>
+        <div class="data_block"><h5 style="color: red">Состояние парса: <span id="parse_state"></span></h5></div>
+    </div>
 <script>
         function ozon_loader() {
     fetch("{% url 'load_ozon'%}", {
@@ -61,7 +64,9 @@
                 if (data.answer === true) {
                     console.log("busy");
                     is_busy = 1;
+                    document.getElementById("parse_state").innerText = "Происходит парс";
                 } else {
+                    document.getElementById("parse_state").innerText = "Парса не происходит";
                     if (is_busy === 1) {
                         alert("Сайт был полностью прогружен");
                     }
