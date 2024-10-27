@@ -196,8 +196,6 @@ class SeleniumManager(multiprocessing.Process):
                                        last_time=True)
                     product.save()
                     continue
-                #print(f"{client.last_product}, {product.offer_id}, {client.last_product == product.offer_id}, {type(client.last_product)}, {type(product.offer_id)}")
-                print(f"{client.username}: {client.last_product}")
                 if client.product_blocked and client.last_product == product.offer_id:
                     client.last_product = "-1"
                     client.product_blocked = False

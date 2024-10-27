@@ -79,16 +79,18 @@ class Manager(multiprocessing.Process):
             ctime = timezone.now()
             clients = Client.objects.all()
             for client in clients:
-                if client.last_update == None:
+                if client.last_update is None:
                     client.last_update = ctime
                     client.save()
                 print("Passed time:", (ctime - client.last_update).total_seconds())
-                if (ctime - client.last_update).total_seconds() > 600:
+                if (ctime - client.last_update).total_seconds() > 300:
+                    print(f"Client {client.username} is being repriced")
                     client.last_update = ctime
                     client.save()
                     products = Product.objects.filter(shop=client)
                     for product in products:
                         if product.needed_price is not None and product.needed_price > 0:
+                            print(f"Added product {product.offer_id}")
                             self.correct_product(client.username, client.api_key, product.offer_id,
                                                  product.needed_price)
 
