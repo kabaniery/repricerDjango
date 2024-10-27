@@ -262,6 +262,7 @@ def load_from_file(request):
                 product = Product.objects.get(shop=client, offer_id=offer_id)
                 product.needed_price = price
                 updated_products.append(product)
+                mass[offer_id] = [product.price, price]
                 print(product.offer_id, product.needed_price)
             except Exception as e:
                 continue
