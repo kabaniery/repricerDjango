@@ -123,6 +123,7 @@ class SeleniumManager(multiprocessing.Process):
         self.logger.info(f"Controller {self.process_it} started")
         mass = list()
         it = 0
+        client_map: dict[Client] = dict()
         while True:
             self.last_alive_ping = time.time()
             try:
@@ -167,16 +168,21 @@ class SeleniumManager(multiprocessing.Process):
                         self.products_save(mass)
                         self._lock.release()
                     mass = list()
-                    self.logger.info("Empty queue...")
-                    time.sleep(3)
+                    Client.objects.update(product_blocked=False)
+                    time.sleep(7)
                     continue
                 if client is None or product is None or url is None:
                     it = 0
                     time.sleep(1)
                     print(client, product, url)
                     continue
-
-
+                client_map[client] = 0
+                for c in client_map.keys():
+                    if c != client:
+                        client_map[c] += 1
+                        if client_map[c] > 70:
+                            c.product_blocked = False
+                            c.save()
                 if client.product_blocked and client.last_product == product.offer_id:
                     print(f"Client {client.username} is being cleared")
                     client.last_product = "-1"
