@@ -35,8 +35,8 @@ class SeleniumManager(multiprocessing.Process):
             for product in products:
                 try:
                     product.save()
-                except Exception:
-                    self.logger.error("Can't save product")
+                except Exception as e:
+                    self.logger.error(f"Can't save product with {e}")
 
     def find_price(self, url, driver):
         try:
