@@ -185,6 +185,7 @@ def load_from_ozon(request):
     assert isinstance(client, Client)
     if not client.product_blocked:
         client.product_blocked = True
+        client.last_product = None
         client.save()
         Product.objects.filter(shop=client).delete()
         Product.objects.filter(shop=client).update(to_removal=True)
