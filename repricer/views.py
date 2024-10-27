@@ -79,7 +79,7 @@ def changing_price(client: Client, products, last_time=False):
                             product.price = value[1]
                             product.save()
                         except Exception as e:
-                            print("Error reparse for product", key, "user", client.username, "with e", e)
+                            logging.getLogger("django").warning("Error reparse for product", key, "user", client.username, "with e", e)
                             connection.ensure_connection()
                             product.save()
                     return "Ok"
