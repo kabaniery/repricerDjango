@@ -207,6 +207,8 @@ def load_from_ozon(request):
             for item in all_data.json()['result']['items']:
                 manager.add_product(client.username, client.api_key, item['offer_id'])
                 last_offer_id = item['offer_id']
+                print(last_offer_id)
+            print("Getted last offer id", last_offer_id)
             if last_offer_id is not None:
                 client.last_product = str(last_offer_id)
                 client.save()
