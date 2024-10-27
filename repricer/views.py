@@ -212,6 +212,7 @@ def load_from_ozon(request):
             if last_offer_id is not None:
                 client.last_product = str(last_offer_id)
                 client.save()
+                print(f'setted client {client.username} offer id {last_offer_id}')
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
