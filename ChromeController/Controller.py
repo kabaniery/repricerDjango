@@ -153,11 +153,13 @@ class SeleniumManager(multiprocessing.Process):
                         continue
                 else:
                     if len(mass) > 0:
+                        print("mass writed")
                         self._lock.acquire()
                         self.products_save(mass)
                         self._lock.release()
                     mass = list()
-                    print("mass writed")
+                    self.logger.info("Empty queue...")
+                    time.sleep(3)
                     continue
                 if client is None or product is None or url is None:
                     it = 0
