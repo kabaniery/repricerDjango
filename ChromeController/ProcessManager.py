@@ -76,6 +76,9 @@ class Manager(multiprocessing.Process):
         self.threads = [SeleniumManager(self.putQueue, self.forceQueue, i) for i in range(self.count)]
         for thread in self.threads:
             thread.start()
+
+        p_reviewer = multiprocessing.Process(target=selenium_healer, args=(self.threads, ))
+        p_reviewer.start()
         while True:
             it = 0
             for thread in self.threads:
@@ -84,6 +87,7 @@ class Manager(multiprocessing.Process):
                         self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, it)
                         self.threads[it].start()
                         continue
+                    p_reviewer.terminate()
                     display.stop()
                     self.logger.warning("display stopped")
                     for thread in self.threads:
