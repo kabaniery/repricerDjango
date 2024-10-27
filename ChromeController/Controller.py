@@ -157,10 +157,12 @@ class SeleniumManager(multiprocessing.Process):
                         self.products_save(mass)
                         self._lock.release()
                     mass = list()
+                    print("mass writed")
                     continue
                 if client is None or product is None or url is None:
                     it = 0
                     time.sleep(1)
+                    print(client, product, url)
                     continue
 
                 product.is_updating = False
@@ -178,6 +180,7 @@ class SeleniumManager(multiprocessing.Process):
 
                 if price is None:
                     product.save()
+                    print(f"Cannot parse product {product.offer_id}")
                     continue
                 product.price = Decimal(price)
                 if gray_price is not None:
@@ -198,6 +201,7 @@ class SeleniumManager(multiprocessing.Process):
                     product.save()
                     continue
                 if client.product_blocked and client.last_product == product.offer_id:
+                    print(f"Client {client.username} is being cleared")
                     client.last_product = "-1"
                     client.product_blocked = False
                     client.save()

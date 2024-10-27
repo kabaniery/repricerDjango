@@ -188,6 +188,7 @@ def load_from_ozon(request):
         client.last_product = None
         client.save()
         Product.objects.filter(shop=client).update(to_removal=True)
+        print("product count", len(Product.objects.filter(shop=client)))
         header = {
             "Client-Id": client.username,
             'Api-Key': client.api_key
