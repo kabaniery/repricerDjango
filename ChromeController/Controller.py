@@ -36,6 +36,7 @@ class SeleniumManager(multiprocessing.Process):
         except Exception:
             for product in products:
                 try:
+                    connection.ensure_connection()
                     product.save()
                 except Exception as e:
                     self.logger.error(f"Can't save product with {e}")
@@ -175,6 +176,13 @@ class SeleniumManager(multiprocessing.Process):
                     print(client, product, url)
                     continue
 
+
+                if client.product_blocked and client.last_product == product.offer_id:
+                    print(f"Client {client.username} is being cleared")
+                    client.last_product = "-1"
+                    client.product_blocked = False
+                    client.save()
+                    Product.objects.filter(shop=client, to_removal=True).delete()
                 product.is_updating = False
 
                 gray_price = None
@@ -189,6 +197,7 @@ class SeleniumManager(multiprocessing.Process):
                         price = self.find_price(url, self.driver)
 
                 if price is None:
+                    connection.ensure_connection()
                     product.save()
                     print(f"Cannot parse product {product.offer_id}")
                     continue
@@ -208,14 +217,10 @@ class SeleniumManager(multiprocessing.Process):
                         from repricer.views import changing_price
                         changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]},
                                        last_time=True)
+                    connection.ensure_connection()
                     product.save()
                     continue
-                if client.product_blocked and client.last_product == product.offer_id:
-                    print(f"Client {client.username} is being cleared")
-                    client.last_product = "-1"
-                    client.product_blocked = False
-                    client.save()
-                    Product.objects.filter(shop=client, to_removal=True).delete()
+
                 mass.append(product)
                 it += 1
                 scripts.Driver.it = it
