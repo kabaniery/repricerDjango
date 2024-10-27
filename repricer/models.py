@@ -22,6 +22,6 @@ class Product(models.Model):
     it = models.IntegerField(default=0)
     needed_price = models.IntegerField(null=True)
     to_removal = models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.id)
-
