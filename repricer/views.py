@@ -47,7 +47,7 @@ def changing_price(client: Client, products, last_time=False):
             fact_price = int(float(item['price']['price']))
             old_green = int(float(products[item['offer_id']][0]))
             new_price = int(new_green * fact_price / old_green)
-            if item['offer_id'] == '830930':
+            if item['offer_id'] == '77103':
                 print('setted price -', new_price)
             if is_old_price_correct(float(item['price']['old_price']), new_price):
                 old_price = item['price']['old_price']
