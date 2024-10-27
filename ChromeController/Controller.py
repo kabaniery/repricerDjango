@@ -8,6 +8,7 @@ from decimal import Decimal
 import requests
 import selenium.common.exceptions as exceptions
 from django.core.files.base import ContentFile
+from django.db import connection
 from lxml import etree
 from selenium.webdriver import ChromeOptions
 
@@ -38,6 +39,13 @@ class SeleniumManager(multiprocessing.Process):
                     product.save()
                 except Exception as e:
                     self.logger.error(f"Can't save product with {e}")
+                    connection.close()
+                    connection.ensure_connection()
+                    try:
+                        product.save()
+                    except Exception as e:
+                        print("Continued with", e)
+                        continue
 
     def find_price(self, url, driver):
         try:
