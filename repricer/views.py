@@ -230,19 +230,19 @@ def get_product_count(request):
 
 @login_required
 def load_from_file(request):
-    print("request getted")
     if request.method == 'POST':
         client = request.user
         assert isinstance(client, Client)
         with open(f"tmp/{client.username}.xlsx", 'wb') as f:
             for chunk in request.FILES['csv_input'].chunks():
                 f.write(chunk)
+        print("file opened")
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
         mass = dict()
         updated_products = list()
         for row in sheet.iter_rows(min_row=2, values_only=True):
-
+            print(row)
             row_values = row[:2]
             if len(row_values) < 2:
                 continue
