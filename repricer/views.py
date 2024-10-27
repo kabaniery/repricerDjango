@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
+from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
@@ -38,9 +39,6 @@ def changing_price(client: Client, products, last_time=False):
         },
         'limit': str(len(products.keys()))
     }
-    print(headers)
-    print("____________________")
-    print(data)
     response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
     if response.status_code == 200:
         prices = list()
@@ -75,12 +73,15 @@ def changing_price(client: Client, products, last_time=False):
             if last_time:
                 try:
                     for key, value in products.items():
+                        product = None
                         try:
                             product = Product.objects.get(shop=client, offer_id=key)
                             product.price = value[1]
                             product.save()
-                        except:
-                            print("Error reparse for product", key, "user", client.username)
+                        except Exception as e:
+                            print("Error reparse for product", key, "user", client.username, "with e", e)
+                            connection.ensure_connection()
+                            product.save()
                     return "Ok"
                 except ValueError as e:
                     print(e)
@@ -263,9 +264,7 @@ def load_from_file(request):
             except Exception as e:
                 continue
             if product.price != price:
-                print("ok")
                 mass[offer_id] = [product.price, price]
-        print(mass)
         Product.objects.bulk_update(updated_products, ['needed_price'])
         changing_price(client, mass)
     return redirect('index')
