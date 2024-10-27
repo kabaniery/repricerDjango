@@ -36,8 +36,9 @@ def changing_price(client: Client, products, last_time=False):
         'filter': {
             'offer_id': list(products.keys())
         },
-        'limit': len(products.keys())
+        'limit': str(len(products.keys()))
     }
+
     response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
     if response.status_code == 200:
         prices = list()
