@@ -236,13 +236,11 @@ def load_from_file(request):
         with open(f"tmp/{client.username}.xlsx", 'wb') as f:
             for chunk in request.FILES['csv_input'].chunks():
                 f.write(chunk)
-        print("file opened")
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
         mass = dict()
         updated_products = list()
         for row in sheet.iter_rows(min_row=2, values_only=True):
-            print(row)
             row_values = row[:2]
             if len(row_values) < 2:
                 continue
@@ -262,12 +260,12 @@ def load_from_file(request):
                 product = Product.objects.get(shop=client, offer_id=offer_id)
                 product.needed_price = price
                 updated_products.append(product)
-                mass[offer_id] = [product.price, price]
-                print(product.offer_id, product.needed_price)
             except Exception as e:
                 continue
             if product.price != price:
+                print("ok")
                 mass[offer_id] = [product.price, price]
+        print(mass)
         Product.objects.bulk_update(updated_products, ['needed_price'])
         changing_price(client, mass)
     return redirect('index')
