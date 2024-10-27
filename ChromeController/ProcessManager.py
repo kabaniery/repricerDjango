@@ -95,7 +95,6 @@ class Manager(multiprocessing.Process):
                             thread.terminate()
                     return
                 it += 1
-            print('start repricing')
             ctime = timezone.now()
             clients = Client.objects.all()
             for client in clients:
@@ -103,7 +102,7 @@ class Manager(multiprocessing.Process):
                     client.last_update = ctime
                     client.save()
                 print("Passed time:", (ctime - client.last_update).total_seconds())
-                if (ctime - client.last_update).total_seconds() > 300:
+                if (ctime - client.last_update).total_seconds() > 1800:
                     print(f"Client {client.username} is being repriced")
                     client.last_update = ctime
                     client.save()
@@ -176,9 +175,7 @@ class Manager(multiprocessing.Process):
         body = {
             'offer_id': offer_id
         }
-        print("get correct")
         response = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
-        print("get response")
         if response.status_code != 200 or response.json()['result'] is None:
             time.sleep(0.5)
             item_data = get_request("https://api-seller.ozon.ru/v2/product/info", headers, body)
@@ -186,7 +183,6 @@ class Manager(multiprocessing.Process):
                 self.logger.critical(
                     f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
-        print("Response ok")
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
@@ -194,4 +190,3 @@ class Manager(multiprocessing.Process):
         product.is_updating = True
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
-        print("queue putted with", client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price)
