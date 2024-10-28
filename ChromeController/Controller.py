@@ -125,11 +125,11 @@ class SeleniumManager(multiprocessing.Process):
         it = 0
         client_map: dict[Client] = dict()
         while True:
-            self.last_alive_ping = time.time()
             try:
+                self.last_alive_ping = time.time()
+                print("ping updated", self.last_alive_ping)
                 if not self.force_queue.empty():
                     shop_url, client_id = self.force_queue.get()
-                    print("force getted", shop_url, client_id)
                     try:
                         code = get_code(self.driver, shop_url)
                         html = etree.HTML(code)
@@ -157,11 +157,8 @@ class SeleniumManager(multiprocessing.Process):
                 new_price = None
                 if not self.data_queue.empty():
                     try:
-                        print("normal getted", end="; ")
                         client, product, url, new_price = self.data_queue.get(timeout=3)
-                        print(client, product, url, new_price)
                     except Exception:
-                        print("Can't get")
                         self.logger.info("Empty queue...")
                         time.sleep(3)
                         continue
@@ -171,10 +168,6 @@ class SeleniumManager(multiprocessing.Process):
                         self._lock.acquire()
                         self.products_save(mass)
                         self._lock.release()
-                    self._lock.acquire()
-                    print("empty")
-                    time.sleep(5)
-                    self._lock.release()
                     mass = list()
                     Client.objects.update(product_blocked=False)
                     continue
