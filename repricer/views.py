@@ -81,7 +81,13 @@ def changing_price(client: Client, products, last_time=False):
                         except Exception as e:
                             logging.getLogger("django").warning("Error reparse for product", key, "user", client.username, "with e", e)
                             connection.ensure_connection()
-                            product.save()
+                            if Product.objects.filter(shop=client, offer_id=key).exists():
+                                product = Product.objects.get(shop=client, offer_id=str(key))
+                                product.price = value[1]
+                                product.save()
+                            else:
+                                logging.getLogger("django").error(f"Can't find product {key} in client {client.username}")
+
                     return "Ok"
                 except ValueError as e:
                     print(e)
