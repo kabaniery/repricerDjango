@@ -77,7 +77,7 @@ class Manager(multiprocessing.Process):
         for thread in self.threads:
             thread.start()
 
-        p_reviewer = multiprocessing.Process(target=self.selenium_healer, args=(self.threads, self.putQueue, self.forceQueue,))
+        p_reviewer = multiprocessing.Process(target=self.selenium_healer, args=(self.threads, ))
         p_reviewer.start()
 
         while True:
