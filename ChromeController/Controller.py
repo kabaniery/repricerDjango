@@ -116,6 +116,7 @@ class SeleniumManager(multiprocessing.Process):
 
     def run(self):
         from repricer.models import Client, Product
+        print(f"founded {len(Client.objects.all())} and {len(Product.objects.all())}")
         import django.db.utils
 
         self.create_driver()

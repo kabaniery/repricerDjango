@@ -74,6 +74,7 @@ class Manager(multiprocessing.Process):
         django.setup()
         time.sleep(10)
         from repricer.models import Client, Product
+        print(f"founded {len(Client.objects.all())} and {len(Product.objects.all())}")
         self.threads = [SeleniumManager(self.putQueue, self.forceQueue, i) for i in range(self.count)]
         for thread in self.threads:
             thread.start()
@@ -193,6 +194,7 @@ class Manager(multiprocessing.Process):
             product = Product.objects.get(shop=client, offer_id=offer_id)
         except Exception as e:
             self.logger.error(f"Can't get product {offer_id} from client {username} with {e}")
+            return
         product.is_updating = True
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
