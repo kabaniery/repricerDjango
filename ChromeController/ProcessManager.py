@@ -13,25 +13,23 @@ from scripts.LanguageAdapting import generate_ozon_name
 from scripts.Driver import get_request
 
 
-def selenium_healer(process_list: list[SeleniumManager], putQueue, forceQueue):
-    logger = logging.getLogger("parallel_process")
-    while True:
-        for index, process in enumerate(process_list):
-            if time.time() - process.last_alive_ping.value > 60:
-                logger.warning(f"Process {process.process_it} has been dead")
-                it = process.process_it
-
-                process.terminate()
-                time.sleep(5)
-
-                process_list[index] = SeleniumManager(putQueue, forceQueue, it)
-                process_list[index].start()
-        time.sleep(5)
-
-
 class Manager(multiprocessing.Process):
     _singleton = None
 
+    def selenium_healer(self, process_list: list[SeleniumManager]):
+        logger = logging.getLogger("parallel_process")
+        while True:
+            for index, process in enumerate(process_list):
+                if time.time() - process.last_alive_ping.value > 60:
+                    logger.warning(f"Process {process.process_it} has been dead")
+                    it = process.process_it
+
+                    process.terminate()
+                    time.sleep(5)
+
+                    process_list[index] = SeleniumManager(self.putQueue, self.forceQueue, it)
+                    process_list[index].start()
+            time.sleep(5)
     @staticmethod
     def shutdown():
         print("shutting down manager")
@@ -79,7 +77,7 @@ class Manager(multiprocessing.Process):
         for thread in self.threads:
             thread.start()
 
-        p_reviewer = multiprocessing.Process(target=selenium_healer, args=(self.threads, self.putQueue, self.forceQueue, ))
+        p_reviewer = multiprocessing.Process(target=self.selenium_healer, args=(self.threads, self.putQueue, self.forceQueue,))
         p_reviewer.start()
 
         while True:
