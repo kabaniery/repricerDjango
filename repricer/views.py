@@ -79,6 +79,7 @@ def changing_price(client: Client, products, last_time=False):
                                 product = Product.objects.get(shop=client, offer_id=str(key))
                             else:
                                 logging.getLogger("django").error(f"Can't find product {key} for client {client.username}")
+                                connection.ensure_connection()
                                 return
                             product.price = value[1]
                             product.save()
