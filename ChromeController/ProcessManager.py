@@ -22,7 +22,7 @@ def selenium_healer(process_list: list[SeleniumManager], putQueue, forceQueue):
                 it = process.process_it
 
                 process.terminate()
-                process.join()
+                time.sleep(5)
 
                 process_list[index] = SeleniumManager(putQueue, forceQueue, it)
                 process_list[index].start()
