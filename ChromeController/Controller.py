@@ -171,6 +171,7 @@ class SeleniumManager(multiprocessing.Process):
                         self._lock.release()
                     mass = list()
                     Client.objects.update(product_blocked=False)
+                    time.sleep(10)
                     continue
                 if client is None or product is None or url is None:
                     it = 0
