@@ -80,6 +80,7 @@ class Manager(multiprocessing.Process):
         p_reviewer = multiprocessing.Process(target=selenium_healer, args=(self.threads, self.putQueue, self.forceQueue, ))
         p_reviewer.start()
         while True:
+            time.sleep(10)
             it = 0
             for thread in self.threads:
                 if not thread.is_alive():
