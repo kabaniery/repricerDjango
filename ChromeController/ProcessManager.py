@@ -98,6 +98,7 @@ class Manager(multiprocessing.Process):
                 it += 1
             ctime = timezone.now()
             clients = Client.objects.all()
+            print("start repricing for ", len(clients))
             for client in clients:
                 if client.last_update is None:
                     client.last_update = ctime
