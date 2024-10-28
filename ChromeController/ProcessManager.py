@@ -105,7 +105,7 @@ class Manager(multiprocessing.Process):
                     client.last_update = ctime
                     client.save()
                 print("Passed time:", (ctime - client.last_update).total_seconds())
-                if (ctime - client.last_update).total_seconds() > 1800:
+                if (ctime - client.last_update).total_seconds() > 300:
                     print(f"Client {client.username} is being repriced")
                     client.last_update = ctime
                     client.save()
