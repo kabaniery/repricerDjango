@@ -117,7 +117,7 @@ class SeleniumManager(multiprocessing.Process):
     def run(self):
         self._lock.acquire()
         from repricer.models import Client, Product
-        print(f"founded {len(Client.objects.all())} clients and {len(Product.objects.all())} products")
+        print(f"founded {len(Client.objects.all())} clients")
         import django.db.utils
         self._lock.release()
         self.create_driver()
