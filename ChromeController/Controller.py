@@ -45,7 +45,7 @@ class SeleniumManager(multiprocessing.Process):
                     try:
                         product.save()
                     except Exception as e:
-                        print("Continued with", e)
+                        self.logger.error(f"Continued with {e}")
                         continue
 
     def find_price(self, url, driver):
