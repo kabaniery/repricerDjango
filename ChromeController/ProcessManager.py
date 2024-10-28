@@ -189,7 +189,10 @@ class Manager(multiprocessing.Process):
         from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
-        product = Product.objects.get(shop=client, offer_id=offer_id)
+        try:
+            product = Product.objects.get(shop=client, offer_id=offer_id)
+        except Exception as e:
+            self.logger.error(f"Can't get product {offer_id} from client {username} with {e}")
         product.is_updating = True
         self.putQueue.put(
             (client, product, generate_ozon_name(json_data['name'], json_data['sku']), new_price))
