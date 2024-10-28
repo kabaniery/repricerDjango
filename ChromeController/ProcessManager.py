@@ -17,7 +17,7 @@ def selenium_healer(process_list: list[SeleniumManager], putQueue, forceQueue):
     logger = logging.getLogger("parallel_process")
     while True:
         for index, process in enumerate(process_list):
-            if time.time() - process.last_alive_ping > 60:
+            if time.time() - process.last_alive_ping.value > 60:
                 logger.warning(f"Process {process.process_it} has been dead")
                 it = process.process_it
 

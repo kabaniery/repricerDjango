@@ -27,7 +27,7 @@ class SeleniumManager(multiprocessing.Process):
         self.force_queue = force_queue
         self.logger = logging.getLogger("parallel_process")
         self.process_it = process_it
-        self.last_alive_ping = time.time()
+        self.last_alive_ping = multiprocessing.Value('d', time.time())
 
     def products_save(self, products):
         from repricer.models import Product
@@ -126,8 +126,7 @@ class SeleniumManager(multiprocessing.Process):
         client_map: dict[Client] = dict()
         while True:
             try:
-                self.last_alive_ping = time.time()
-                print("ping updated", self.last_alive_ping)
+                self.last_alive_ping.value = time.time()
                 if not self.force_queue.empty():
                     shop_url, client_id = self.force_queue.get()
                     try:
