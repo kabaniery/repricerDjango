@@ -75,11 +75,14 @@ def changing_price(client: Client, products, last_time=False):
                     for key, value in products.items():
                         product = None
                         try:
-                            product = Product.objects.get(shop=client, offer_id=str(key))
+                            if Product.objects.filter(shop=client, offer_id=str(key)).exists():
+                                product = Product.objects.get(shop=client, offer_id=str(key))
+                            else:
+                                logging.getLogger("django").error(f"Can't find product {key} for client {client.username}")
                             product.price = value[1]
                             product.save()
                         except Exception as e:
-                            logging.getLogger("django").warning("Error reparse for product", key, "user", client.username)
+                            logging.getLogger("django").warning(f"Error reparse for product {key} user {client.username}")
                             connection.ensure_connection()
                             if Product.objects.filter(shop=client, offer_id=key).exists():
                                 product = Product.objects.get(shop=client, offer_id=str(key))
