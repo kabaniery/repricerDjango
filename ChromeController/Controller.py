@@ -115,10 +115,11 @@ class SeleniumManager(multiprocessing.Process):
             self.driver = scripts.Driver.get_driver()
 
     def run(self):
+        self._lock.acquire()
         from repricer.models import Client, Product
-        print(f"founded {len(Client.objects.all())} and {len(Product.objects.all())}")
+        print(f"founded {len(Client.objects.all())} clients and {len(Product.objects.all())} products")
         import django.db.utils
-
+        self._lock.release()
         self.create_driver()
         print("Controller", self.process_it, "started")
         self.logger.info(f"Controller {self.process_it} started")
