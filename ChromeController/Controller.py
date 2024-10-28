@@ -219,7 +219,7 @@ class SeleniumManager(multiprocessing.Process):
                     print('getted price -', product.price)
                 # print(product.name, "price: ", product.price)
                 product.gray_price = price
-                self.logger.debug(f"product {product.name}; price {product.price}")
+                self.logger.info(f"product {product.name}; price {product.price}")
                 if new_price is not None:
                     if abs(float(price) - float(new_price)) > 0:
                         from repricer.views import changing_price
