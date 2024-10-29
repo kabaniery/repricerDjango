@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+import os
 import time
 from datetime import timezone
 
@@ -12,7 +13,6 @@ from ChromeController.Controller import SeleniumManager
 from scripts.Driver import get_request
 from scripts.LanguageAdapting import generate_ozon_name
 
-time.sleep(10)
 from repricer.models import Client, Product
 
 

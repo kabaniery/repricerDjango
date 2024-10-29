@@ -1,3 +1,6 @@
+import os
+
+import django
 from waitress import serve
 
 from ChromeController.ProcessManager import Manager
@@ -6,6 +9,8 @@ from repricerDjango import wsgi
 import multiprocessing
 
 if __name__ == "__main__":
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
+    django.setup()
     man = multiprocessing.Manager()
     set_queue(man.Queue())
     manager = Manager(10, get_queue())
