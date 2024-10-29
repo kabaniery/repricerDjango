@@ -4,13 +4,16 @@ import time
 from datetime import timezone
 
 import django
-import requests
 from django.utils import timezone
 from pyvirtualdisplay import Display
 
 from ChromeController.Controller import SeleniumManager
-from scripts.LanguageAdapting import generate_ozon_name
+
 from scripts.Driver import get_request
+from scripts.LanguageAdapting import generate_ozon_name
+
+time.sleep(10)
+from repricer.models import Client, Product
 
 
 class Manager(multiprocessing.Process):
@@ -30,6 +33,7 @@ class Manager(multiprocessing.Process):
                     process_list[index] = SeleniumManager(self.putQueue, self.forceQueue, it)
                     process_list[index].start()
             time.sleep(5)
+
     @staticmethod
     def shutdown():
         print("shutting down manager")
@@ -77,7 +81,7 @@ class Manager(multiprocessing.Process):
         for thread in self.threads:
             thread.start()
 
-        p_reviewer = multiprocessing.Process(target=self.selenium_healer, args=(self.threads, ))
+        p_reviewer = multiprocessing.Process(target=self.selenium_healer, args=(self.threads,))
         p_reviewer.start()
 
         while True:
@@ -189,7 +193,6 @@ class Manager(multiprocessing.Process):
                 self.logger.critical(
                     f"Error on request correct product/info with offerId {body['offer_id']}. Text: {item_data.text}")
                 return
-        from repricer.models import Client, Product
         client = Client.objects.get(username=username)
         json_data = response.json()['result']
         try:

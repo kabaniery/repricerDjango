@@ -104,6 +104,7 @@ DATABASES = {
         'PASSWORD': 'repricerpassword',
         'HOST': 'localhost',
         'PORT': '3306',
+        'CONN_MAX_AGE': 20,
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
