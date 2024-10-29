@@ -75,8 +75,9 @@ def changing_price(client: Client, products, last_time=False):
                     for key, value in products.items():
                         product = None
                         try:
-                            if Product.objects.filter(shop=client, offer_id=str(key)).exists():
-                                product = Product.objects.get(shop=client, offer_id=str(key))
+                            product_list = Product.objects.filter(shop=client, offer_id=str(key))
+                            if product_list.exists():
+                                product = product_list.first()
                             else:
                                 logging.getLogger("django").error(f"Can't find product {key} for client {client.username}")
                                 connection.ensure_connection()
