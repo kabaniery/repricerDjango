@@ -11,6 +11,9 @@ class RepricerConfig(AppConfig):
     manager = None
 
     def ready(self):
+        from ChromeController.ProcessManager import Manager
+        atexit.register(Manager.shutdown)
+
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'repricer' AND table_name = 'repricer_client';")
@@ -24,6 +27,4 @@ class RepricerConfig(AppConfig):
                     logging.getLogger("django").warning("Can't update")
 
 
-from ChromeController.ProcessManager import Manager
 
-atexit.register(Manager.shutdown)
