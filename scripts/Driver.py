@@ -11,9 +11,9 @@ import requests
 @limits(calls=100, period=1)
 def get_request(url, headers, body, post=True):
     if post:
-        return requests.post(url, headers=headers, json=body)
+        return requests.post(url, headers=headers, json=body, timeout=5)
     else:
-        return requests.get(url, headers=headers, json=body)
+        return requests.get(url, headers=headers, json=body, timeout=5)
 
 
 def get_options():
