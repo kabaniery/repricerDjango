@@ -85,7 +85,7 @@ class Manager(multiprocessing.Process):
             for thread in self.threads:
                 if not thread.is_alive():
                     if not self.is_stopped:
-                        self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, it)
+                        self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, thread.process_it)
                         self.threads[it].start()
                         continue
                     p_reviewer.terminate()
@@ -94,6 +94,7 @@ class Manager(multiprocessing.Process):
                     for thread in self.threads:
                         if thread.is_alive():
                             thread.terminate()
+                    self.logger.critical("Main Process stopped")
                     return
                 it += 1
             ctime = timezone.now()
@@ -113,6 +114,9 @@ class Manager(multiprocessing.Process):
                         if product.needed_price is not None and product.needed_price > 0 and not product.is_updating:
                             self.correct_product(client.username, client.api_key, product.offer_id,
                                                  product.needed_price)
+                    print("____________________________")
+                    print("next user")
+            print("Wait 120 second")
 
             time.sleep(120)
 
