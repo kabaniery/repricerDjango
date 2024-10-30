@@ -98,16 +98,12 @@ WSGI_APPLICATION = 'repricerDjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'repricer',
-        'USER': 'repricer-manager',
+        'USER': 'repricer_manager',
         'PASSWORD': 'repricerpassword',
         'HOST': 'localhost',
-        'PORT': '3306',
-        'CONN_MAX_AGE': 20,
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        'PORT': '5432'
     }
 }
 

@@ -2,6 +2,7 @@ import logging
 import time
 
 import undetected_chromedriver
+from requests import Response
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from ratelimit import limits
@@ -9,7 +10,7 @@ import requests
 
 
 @limits(calls=100, period=1)
-def get_request(url, headers, body, post=True):
+def get_request(url, headers, body, post=True) -> Response:
     if post:
         return requests.post(url, headers=headers, json=body, timeout=5)
     else:

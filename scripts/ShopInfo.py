@@ -37,11 +37,7 @@ def shop_info(current_driver: webdriver.Chrome, result: dict, client_id, shop_ur
     current_driver.close()
 
 
-def get_shop_infos(client_id, api_key, shop_url):
-    result = dict()
-    url_thread = threading.Thread(target=shop_info, args=(get_driver(), result, client_id, shop_url))
-    url_thread.start()
-
+def check_shop_info(client_id, api_key):
     headers = {
         'Client-Id': str(client_id),
         'Api-Key': api_key,
@@ -51,8 +47,6 @@ def get_shop_infos(client_id, api_key, shop_url):
         'limit': 1
     }
     response = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
-    url_thread.join()
     if response.status_code == 200:
-        if result['status']:
-            return result
-    return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
+        return True
+    return False

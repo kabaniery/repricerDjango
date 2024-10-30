@@ -1,18 +1,25 @@
 import atexit
 import logging
 
+import redis
 from django.apps import AppConfig
 from django.db import connection
+from redis import Redis
 
 
 class RepricerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'repricer'
-    manager = None
+    broker: Redis = None
+
+    def shutdown(self):
+        if self.broker is not None:
+            self.broker.lpush("important", "destroy")
 
     def ready(self):
-        from ChromeController.ProcessManager import Manager
-        atexit.register(Manager.shutdown)
+        self.broker = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+        atexit.register(self.shutdown)
 
         with connection.cursor() as cursor:
             cursor.execute(

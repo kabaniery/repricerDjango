@@ -7,46 +7,35 @@ from decimal import Decimal
 
 import requests
 import selenium.common.exceptions as exceptions
-from django.core.files.base import ContentFile
-from django.db import connection
 from lxml import etree
 from selenium.webdriver import ChromeOptions
 
 import scripts.Driver
 from scripts.Driver import get_code
+from ChromeController.orm.models import Client, Product
 
 
 class SeleniumManager(multiprocessing.Process):
     lock = multiprocessing.Lock()
 
-    def __init__(self, data_queue, force_queue, process_it):
+    def __init__(self, data_queue, process_it):
         super().__init__()
         self.driver = None
         self.data_queue = data_queue
         self._lock = threading.Lock()
-        self.force_queue = force_queue
         self.logger = logging.getLogger("parallel_process")
         self.process_it = process_it
         self.last_alive_ping = multiprocessing.Value('d', time.time())
 
     def products_save(self, products):
-        from repricer.models import Product
         try:
-            Product.objects.bulk_create(products)
+            Product.bulk_create(products)
         except Exception:
             for product in products:
                 try:
-                    connection.ensure_connection()
                     product.save()
                 except Exception as e:
                     self.logger.error(f"Can't save product with {e}")
-                    connection.close()
-                    connection.ensure_connection()
-                    try:
-                        product.save()
-                    except Exception as e:
-                        self.logger.error(f"Continued with {e}")
-                        continue
 
     def find_price(self, url, driver):
         try:
@@ -115,13 +104,7 @@ class SeleniumManager(multiprocessing.Process):
             self.driver = scripts.Driver.get_driver()
 
     def run(self):
-        self._lock.acquire()
-        from repricer.models import Client, Product
-        print(f"founded {len(Client.objects.all())} clients")
-        import django.db.utils
-        self._lock.release()
         self.create_driver()
-        print("Controller", self.process_it, "started")
         self.logger.info(f"Controller {self.process_it} started")
         mass = list()
         it = 0
@@ -129,36 +112,9 @@ class SeleniumManager(multiprocessing.Process):
         while True:
             try:
                 self.last_alive_ping.value = time.time()
-                if not self.force_queue.empty():
-                    shop_url, client_id = self.force_queue.get()
-                    try:
-                        code = get_code(self.driver, shop_url)
-                        html = etree.HTML(code)
-                        parental_object = \
-                            html.xpath("/html/body/div[1]/div[1]/div[1]/div[@data-widget='shopInShopContainer'][1]/div["
-                                       "1]/div[1]/div[1]")[0]
-                        image_object = parental_object.xpath("./div[1]/div[1]")[0]
-                        style_value = image_object.get('style')
-                        background_url = re.search(r'background:url\((.*?)\)', style_value).group(1)
-                        shop_name = parental_object.xpath("./div[2]/div[1]/span[1]")[0].text
-                        response = requests.get(background_url)
-                        filename: str = str(client_id) + "." + background_url.split(".")[-1]
-                        # Сохранение изображения
-                        image_content = ContentFile(response.content, filename)
-                        client = Client.objects.get(username=client_id)
-                        client.shop_name = shop_name
-                        client.shop_avatar.save(filename, image_content)
-                        client.save()
-                    except Exception as e:
-                        self.logger.error(f"Can't process force queue on page {self.driver.current_url}")
-                    continue
-                client = None
-                product = None
-                url = None
-                new_price = None
                 if not self.data_queue.empty():
                     try:
-                        client, product, url, new_price = self.data_queue.get(timeout=3)
+                        command, client_id, data = self.data_queue.get(timeout=3)
                     except Exception:
                         self.logger.info("Empty queue...")
                         time.sleep(3)
@@ -170,76 +126,14 @@ class SeleniumManager(multiprocessing.Process):
                         self.products_save(mass)
                         self._lock.release()
                     mass = list()
-                    Client.objects.update(product_blocked=False)
+                    # Прописать освобождение ресурсов
                     time.sleep(10)
                     continue
-                if client is None or product is None or url is None:
-                    it = 0
+                if command is None or client_id is None or data is None:
                     time.sleep(1)
-                    print(client, product, url)
-                    continue
-                client_map[client] = 0
-                for c in client_map.keys():
-                    if c != client:
-                        client_map[c] += 1
-                        if client_map[c] > 70:
-                            c.product_blocked = False
-                            c.save()
-                if client.product_blocked and client.last_product == product.offer_id:
-                    print(f"Client {client.username} is being cleared")
-                    client.last_product = "-1"
-                    client.product_blocked = False
-                    client.save()
-                    Product.objects.filter(shop=client, to_removal=True).delete()
-                product.is_updating = False
-
-                gray_price = None
-                price = None
-                for i in range(5):
-                    try:
-                        price = self.find_price(url, self.driver)
-                        break
-                    except exceptions.TimeoutException:
-                        self.logger.warning("Timeout")
-                        self.create_driver()
-                        price = self.find_price(url, self.driver)
-
-                if price is None:
-                    connection.ensure_connection()
-                    product.save()
-                    print(f"Cannot parse product {product.offer_id}")
-                    continue
-                product.price = Decimal(price)
-                if gray_price is not None:
-                    product.gray_price = Decimal(gray_price)
-                else:
-                    product.gray_price = price
-                if product.offer_id == '77103':
-                    self.logger.info(f"Target price: {product.price}")
-                    print('getted price -', product.price)
-                # print(product.name, "price: ", product.price)
-                product.gray_price = price
-                self.logger.info(f"product {product.name}; price {product.price}")
-                if new_price is not None:
-                    if abs(float(price) - float(new_price)) > 0:
-                        from repricer.views import changing_price
-                        changing_price(client, {product.offer_id: [int(float(price)), int(float(new_price))]},
-                                       last_time=True)
-                    connection.ensure_connection()
-                    product.save()
                     continue
 
-                mass.append(product)
-                it += 1
-                scripts.Driver.it = it
-                if it % 10 == 0:
-                    try:
-                        self._lock.acquire()
-                        self.products_save(mass)
-                        self._lock.release()
-                        mass = list()
-                    except django.db.utils.IntegrityError as e:
-                        self.logger.warning(f"Can't add these products {mass} because of {e}")
-            except KeyboardInterrupt:
-                self.logger.warning("Forced keyboard interrupt")
+                if command == 0:
+                    code = get_code(self.driver, data)
+
         self.logger.critical(f"Thread {self.process_it} was stopped")

@@ -1,7 +1,8 @@
-import time
+import json
 import logging
+
 import openpyxl
-import requests
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -9,103 +10,15 @@ from django.contrib.auth.hashers import make_password
 from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
+from redis import Redis
 
-from ChromeController.ProcessManager import Manager
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
 from scripts.Driver import get_request
+from scripts.ShopInfo import check_shop_info
 
 
-def is_old_price_correct(old_price, price):
-    if old_price == 0:
-        return True
-    if price < 400:
-        return old_price - price > 20
-    elif price < 10000:
-        return price / old_price < 0.95
-    else:
-        return old_price - price > 500
 
-
-# products: {'offer-id': (old_price, new_price, new_gray_price)}
-def changing_price(client: Client, products, last_time=False):
-    headers = {
-        'Client-Id': client.username,
-        'Api-Key': client.api_key
-    }
-    data = {
-        'filter': {
-            'offer_id': list(products.keys())
-        },
-        'limit': str(len(products.keys()))
-    }
-    response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
-    if response.status_code == 200:
-        prices = list()
-        for item in response.json()['result']['items']:
-            # old_gray = int(float((request.POST['gray'+str(item['offer_id'])])))
-            new_green = int(float(products[item['offer_id']][1]))
-            fact_price = int(float(item['price']['price']))
-            old_green = int(float(products[item['offer_id']][0]))
-            new_price = int(new_green * fact_price / old_green)
-            if item['offer_id'] == '77103':
-                print('setted price -', new_price)
-            if is_old_price_correct(float(item['price']['old_price']), new_price):
-                old_price = item['price']['old_price']
-            else:
-                old_price = str(int(float(item['price']['old_price']) * new_price / fact_price))
-            actual_data = {
-                'auto_action_enabled': 'UNKNOWN',
-                'currency_code': item['price']['currency_code'],
-                'min_price': str(new_price - 1),
-                'offer_id': item['offer_id'],
-                'old_price': old_price,
-                'price': str(new_price),
-                'price_strategy_enabled': 'UNKNOWN',
-                'product_id': item['product_id']
-            }
-            prices.append(actual_data)
-        new_data = {
-            'prices': prices
-        }
-        response = get_request('https://api-seller.ozon.ru/v1/product/import/prices', headers, new_data)
-        if response.status_code == 200:
-            if last_time:
-                try:
-                    for key, value in products.items():
-                        product = None
-                        try:
-                            product_list = Product.objects.filter(shop=client, offer_id=str(key))
-                            if product_list.exists():
-                                product = product_list.first()
-                            else:
-                                logging.getLogger("django").error(f"Can't find product {key} for client {client.username}")
-                                connection.ensure_connection()
-                                return
-                            product.price = value[1]
-                            product.save()
-                        except Exception as e:
-                            logging.getLogger("django").warning(f"Error reparse for product {key} user {client.username}")
-                            connection.ensure_connection()
-                            if Product.objects.filter(shop=client, offer_id=key).exists():
-                                product = Product.objects.get(shop=client, offer_id=str(key))
-                                product.price = value[1]
-                                product.save()
-                            else:
-                                logging.getLogger("django").error(f"Can't find product {key} in client {client.username}")
-
-                    return "Ok"
-                except ValueError as e:
-                    print(e)
-                    print(products)
-            manager = Manager.get_instance()
-            for key, value in products.items():
-                manager.correct_product(client.username, client.api_key, key, value[1])
-        else:
-            print("error on edit", response.text)
-    else:
-        print("error", response.text)
-    return "Ok"
 
 
 # Create your views here.
@@ -125,18 +38,19 @@ def register_view(request):
         client_id = request.POST['login']
         api_key = request.POST['password']
         shop_url = request.POST['shop_url']
-        manager = Manager.get_instance()
-        result = manager.push_request(shop_url, client_id, api_key)
-        if result['status']:
+
+        if check_shop_info(client_id, api_key):
             new_password = make_password(api_key)
-            new_client = Client(username=client_id, password=new_password,
-                                shop_name=client_id, api_key=api_key)
+            new_client = Client(username=client_id, password=new_password, api_key=api_key)
             new_client.save()
             login(request, new_client)
+
+            broker: Redis = apps.get_app_config("repricer").repricer
+            broker.lpush("register", f"{client_id};{shop_url}")
+
             return redirect('index')
         else:
-            logging.getLogger("django").error("Can't register user:", result['message'])
-            messages.error(request, result['message'])
+            messages.error(request, "Данные магазина неверны")
             return render(request, 'form_template.html', {'form': RegisterForm(), 'form_type': "Регистрация"})
     else:
         form = RegisterForm()
@@ -167,6 +81,7 @@ def login_view(request):
 def get_data(request):
     client = request.user
     assert isinstance(client, Client)
+
     ready_products = Product.objects.filter(shop=client)
     return render(request, "products_list.html", {'products': ready_products[:450]})
 
@@ -176,6 +91,7 @@ def change_price(request):
     if request.method == 'POST':
         client = request.user
         assert isinstance(client, Client)
+
         old_val = dict()
         new_val = dict()
         for key, value in request.POST.items():
@@ -186,12 +102,13 @@ def change_price(request):
         editing_orders = dict()
         for key, value in new_val.items():
             if old_val[key] != value:
-                product = Product.objects.get(shop=client, offer_id=key)
-                editing_orders[key] = [old_val[key], value, 0]
+                editing_orders[key] = [old_val[key], value]
+
         if len(editing_orders.keys()) == 0:
             messages.warning(request, "Нет цен для замены")
         else:
-            changing_price(client, editing_orders)
+            broker: Redis = apps.get_app_config("repricer").repricer
+            broker.lpush("changer", f"{client.username};;{json.dumps(editing_orders)}")
     return redirect('get_data')
 
 
@@ -199,35 +116,16 @@ def change_price(request):
 def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
+
     if not client.product_blocked:
         client.product_blocked = True
         client.last_product = None
         client.save()
+
         Product.objects.filter(shop=client).update(to_removal=True)
-        print("product count", len(Product.objects.filter(shop=client)))
-        header = {
-            "Client-Id": client.username,
-            'Api-Key': client.api_key
-        }
-        body = {
-            'filter':
-                {
-                    'visibility': 'VISIBLE'
-                },
-            'limit': 1000
-        }
-        all_data = get_request("https://api-seller.ozon.ru/v2/product/list", header, body)
-        if all_data.status_code == 200:
-            manager = Manager.get_instance()
-            print("Overall size is", len(all_data.json()['result']['items']))
-            last_offer_id = None
-            for item in all_data.json()['result']['items']:
-                manager.add_product(client.username, client.api_key, item['offer_id'])
-                last_offer_id = item['offer_id']
-            print("Getted last offer id", last_offer_id)
-            if last_offer_id is not None:
-                client.last_product = str(last_offer_id)
-                client.save()
+        broker: Redis = apps.get_app_config('repricer').broker
+        broker.lpush("parser", client.username)
+
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
@@ -237,6 +135,7 @@ def load_from_ozon(request):
 def get_product_count(request):
     client = request.user
     assert isinstance(client, Client)
+
     products = Product.objects.filter(shop=client)
     return JsonResponse({'count': products.count()})
 
@@ -246,13 +145,17 @@ def load_from_file(request):
     if request.method == 'POST':
         client = request.user
         assert isinstance(client, Client)
+
         with open(f"tmp/{client.username}.xlsx", 'wb') as f:
             for chunk in request.FILES['csv_input'].chunks():
                 f.write(chunk)
+
         workbook = openpyxl.load_workbook(f"tmp/{client.username}.xlsx")
         sheet = workbook.active
+
         mass = dict()
         updated_products = list()
+
         for row in sheet.iter_rows(min_row=2, values_only=True):
             row_values = row[:2]
             if len(row_values) < 2:
@@ -262,7 +165,7 @@ def load_from_file(request):
                 offer_id = str(int(offer_id))
             else:
                 offer_id = str(offer_id)
-            price = 0
+
             try:
                 price = int(row_values[1])
             except ValueError:
@@ -277,8 +180,10 @@ def load_from_file(request):
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
+
         Product.objects.bulk_update(updated_products, ['needed_price'])
-        changing_price(client, mass)
+        broker: Redis = apps.get_app_config("repricer").repricer
+        broker.lpush("changing", f"{client.username};;{json.dumps(mass)}")
     return redirect('index')
 
 

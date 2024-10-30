@@ -1,83 +1,149 @@
+import datetime
+import json
 import logging
 import multiprocessing
-import os
 import time
-from datetime import timezone
 
-import django
-from django.utils import timezone
+import redis
 from pyvirtualdisplay import Display
+from tortoise import Tortoise
 
 from ChromeController.Controller import SeleniumManager
-
+from ChromeController.orm import tortoise_config
+from ChromeController.orm.models import Client, Product
 from scripts.Driver import get_request
 from scripts.LanguageAdapting import generate_ozon_name
 
-from repricer.models import Client, Product
+
+def is_old_price_correct(old_price, price):
+    if old_price == 0:
+        return True
+    if price < 400:
+        return old_price - price > 20
+    elif price < 10000:
+        return price / old_price < 0.95
+    else:
+        return old_price - price > 500
+
+
+# TODO: перенести в ProcessManager
+
 
 
 class Manager(multiprocessing.Process):
     _singleton = None
-
-    def selenium_healer(self, process_list: list[SeleniumManager]):
-        logger = logging.getLogger("parallel_process")
-        while True:
-            for index, process in enumerate(process_list):
-                if time.time() - process.last_alive_ping.value > 60:
-                    logger.warning(f"Process {process.process_it} has been dead")
-                    it = process.process_it
-
-                    process.terminate()
-                    time.sleep(5)
-
-                    process_list[index] = SeleniumManager(self.putQueue, self.forceQueue, it)
-                    process_list[index].start()
-            time.sleep(5)
-
-    @staticmethod
-    def shutdown():
-        print("shutting down manager")
-        if Manager._singleton is not None:
-            Manager._singleton.is_stopped = True
-            singleton = Manager._singleton
-            singleton.logger.warning("Shutting down manager")
-            for thread in singleton.threads:
-                thread.terminate()
-
-    @staticmethod
-    def get_instance() -> "Manager":
-        return Manager._singleton
 
     def __new__(cls, *args, **kwargs):
         if cls._singleton is None:
             cls._singleton = super(Manager, cls).__new__(cls)
         return cls._singleton
 
-    def __init__(self, count_process: int, q):
+
+    def __init__(self, count_process: int):
         super().__init__()
-        self.putQueue = q
-        self.started = False
+        self.putQueue = multiprocessing.Queue()
         self.count = count_process
         self.threads = list()
-        self.forceQueue = multiprocessing.Manager().Queue()
         self.logger = logging.getLogger("parallel_process")
-        self.is_stopped = False
+        self.broker = redis.StrictRedis(host='localhost', port=6379, db=0)
+        await Tortoise.init(config=tortoise_config.tortoise_config)
 
     def __del__(self):
         self.logger.warning("process stopped?")
 
+
+    # products: {'offer-id': (old_price, new_price, new_gray_price)}
+    def changing_price(self, client: Client, products: dict[int, list[int, int]], last_time=False):
+        headers = {
+            'Client-Id': client.username,
+            'Api-Key': client.api_key
+        }
+        data = {
+            'filter': {
+                'offer_id': list(products.keys())
+            },
+            'limit': str(len(products.keys()))
+        }
+        response = get_request("https://api-seller.ozon.ru/v4/product/info/prices", headers, data)
+        if response.status_code == 200:
+            prices = list()
+            for item in response.json()['result']['items']:
+                new_green = int(float(products[item['offer_id']][1]))
+                fact_price = int(float(item['price']['price']))
+                old_green = int(float(products[item['offer_id']][0]))
+                new_price = int(new_green * fact_price / old_green)
+
+                # Дебаг
+                if item['offer_id'] == '77103':
+                    print('setted price -', new_price)
+
+                if is_old_price_correct(float(item['price']['old_price']), new_price):
+                    old_price = item['price']['old_price']
+                else:
+                    old_price = str(int(float(item['price']['old_price']) * new_price / fact_price))
+                actual_data = {
+                    'auto_action_enabled': 'UNKNOWN',
+                    'currency_code': item['price']['currency_code'],
+                    'min_price': str(new_price - 1),
+                    'offer_id': item['offer_id'],
+                    'old_price': old_price,
+                    'price': str(new_price),
+                    'price_strategy_enabled': 'UNKNOWN',
+                    'product_id': item['product_id']
+                }
+                prices.append(actual_data)
+
+            new_data = {
+                'prices': prices
+            }
+            response = get_request('https://api-seller.ozon.ru/v1/product/import/prices', headers, new_data)
+            if response.status_code == 200:
+                if last_time:
+                    for key, value in products.items():
+                        try:
+                            product_list = await Product.filter(shop=client, offer_id=str(key))
+                            if len(product_list) > 0:
+                                product = product_list[0]
+                            else:
+                                logging.getLogger("django").error(
+                                    f"Can't find product {key} for client {client.username}")
+                                continue
+                            product.price = value[1]
+                            product.save()
+                        except Exception:
+                            logging.getLogger("django").warning(
+                                f"Error reparse for product {key} user {client.username}")
+                    return
+                for key, value in products.items():
+                    self.putQueue.put([1, client.username, key])
+            else:
+                print("error on edit", response.text)
+        else:
+            print("error", response.text)
+
+
+    def selenium_healer(self, process_list: list[SeleniumManager]):
+        logger = logging.getLogger("parallel_process")
+        while True:
+            for index, process in enumerate(process_list):
+                if time.time() - process.last_alive_ping.value > 60:
+                    logger.warning(f"Process {process.process_it} has been dead. Revive it...")
+                    it = process.process_it
+
+                    process.terminate()
+                    time.sleep(5)
+
+                    process_list[index] = SeleniumManager(self.putQueue, it)
+                    process_list[index].start()
+            time.sleep(5)
+
     def run(self):
-        self.started = True
         self.logger.info(f"Process started with {self.count} threads")
         display = Display(visible=False, size=(1920, 1080))
         display.start()
-        import os
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'repricerDjango.settings')
-        django.setup()
         time.sleep(10)
-        from repricer.models import Client, Product
-        print(f"founded {len(Client.objects.all())} and {len(Product.objects.all())}")
-        self.threads = [SeleniumManager(self.putQueue, self.forceQueue, i) for i in range(self.count)]
+
+        self.threads = [SeleniumManager(self.putQueue, i) for i in range(self.count)]
         for thread in self.threads:
             thread.start()
 
@@ -85,62 +151,63 @@ class Manager(multiprocessing.Process):
         p_reviewer.start()
 
         while True:
-            it = 0
-            for thread in self.threads:
+            # Блок с оживлением процессов
+            for it, thread in enumerate(self.threads):
                 if not thread.is_alive():
-                    if not self.is_stopped:
-                        self.threads[it] = SeleniumManager(self.putQueue, self.forceQueue, thread.process_it)
-                        self.threads[it].start()
-                        continue
-                    p_reviewer.terminate()
+                    self.threads[it] = SeleniumManager(self.putQueue, thread.process_it)
+                    self.threads[it].start()
+                    '''p_reviewer.terminate()
                     display.stop()
                     self.logger.warning("display stopped")
                     for thread in self.threads:
                         if thread.is_alive():
                             thread.terminate()
                     self.logger.critical("Main Process stopped")
-                    return
-                it += 1
-            ctime = timezone.now()
-            clients = Client.objects.all()
-            print("start repricing for ", len(clients))
+                    return'''
+
+            # Блок с считыванием данных
+            message = self.broker.rpop("register")
+            if message is not None:
+                message_split = message.split(";")
+                client_id = message_split[0]
+                shop_url = message_split[1]
+                self.putQueue.put([0, client_id, shop_url])
+
+            message = self.broker.rpop("changer")
+            if message is not None:
+                message_split = message.split(";;")
+                client_id = message_split[0]
+                data = json.loads(message_split[1])
+                self.changing_price(await Client.get(username=client_id), data)
+
+            message = self.broker.rpop("parser")
+            if message is not None:
+                client = await Client.get(username=message)
+                headers = {
+                    "Client-Id": client.username,
+                    "Api-Key": client.api_key
+                }
+                body = {
+                    "filter": {
+                        'visibility': 'VISIBLE'
+                    },
+                    "limit": 1000
+                }
+                result = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
+                if result.status_code == 200:
+                    for item in result.json()['result']['items']:
+                        offer_id = item['offer_id']
+                        self.putQueue.put([1, client.username, offer_id])
+
+            # Блок автопрогрузки
+            clients = await Client.all()
+            now = datetime.datetime.now()
             for client in clients:
-                if client.last_update is None:
-                    client.last_update = ctime
-                    client.save()
-                print("Passed time:", (ctime - client.last_update).total_seconds())
-                if (ctime - client.last_update).total_seconds() > 3600:
-                    print(f"Client {client.username} is being repriced")
-                    client.last_update = ctime
-                    client.save()
-                    products = Product.objects.filter(shop=client)
-                    for product in products:
-                        if product.needed_price is not None and product.needed_price > 0 and not product.is_updating:
-                            self.correct_product(client.username, client.api_key, product.offer_id,
-                                                 product.needed_price)
-                    print("____________________________")
-                    print("next user")
-            print("Wait 120 second")
+                assert isinstance(client, Client)
+                if (now - client.last_update).total_seconds() > 1800:
+                    for product in await Product.filter(shop=client):
+                        self.putQueue.put([1, client.username, product.offer_id])
 
-            time.sleep(120)
-
-    def push_request(self, shop_url, client_id, api_key):
-        result = dict()
-        headers = {
-            'Client-Id': str(client_id),
-            'Api-Key': api_key,
-        }
-        body = {
-            'filter': dict(),
-            'limit': 1
-        }
-        response = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
-        result['status'] = True
-        if response.status_code == 200:
-            self.forceQueue.put((shop_url, client_id))
-            if result['status']:
-                return result
-        return {'status': False, 'message': 'Неправильные данные аутентификации на странице'}
 
     def put_data(self, data):
         self.putQueue.put(data)
