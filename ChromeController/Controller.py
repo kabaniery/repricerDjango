@@ -24,6 +24,7 @@ class SeleniumManager(threading.Thread):
 
     def __init__(self, data_queue, process_it):
         super().__init__()
+        print(f"init started {process_it}")
         self.driver = None
 
         self.data_queue = data_queue
@@ -32,6 +33,7 @@ class SeleniumManager(threading.Thread):
         self.process_it = process_it
         self.last_alive_ping = multiprocessing.Value('d', time.time())
         self.manager = AlchemyManager()
+        print(f"init complete {process_it}")
 
     def products_save(self, products):
         try:
@@ -116,6 +118,7 @@ class SeleniumManager(threading.Thread):
             self.driver = get_driver()
 
     def run(self):
+        print(f"start driver creating for {self.process_it}")
         self.create_driver()
         self.logger.info(f"Controller {self.process_it} started")
         while True:
