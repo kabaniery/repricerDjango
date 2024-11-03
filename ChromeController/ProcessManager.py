@@ -34,7 +34,7 @@ class Manager(multiprocessing.Process):
         self.manager = None
 
     def __del__(self):
-        self.display.stop()
+        #self.display.stop()
         self.logger.warning("process stopped?")
 
     def run(self):
@@ -46,8 +46,8 @@ class Manager(multiprocessing.Process):
 
         self.logger.info(f"Process started with {self.count} threads")
         self.broker = redis.StrictRedis(host='localhost', port=6379, db=0)
-        self.display = Display(visible=False, size=(1920, 1080))
-        self.display.start()
+        #self.display = Display(visible=False, size=(1920, 1080))
+        #self.display.start()
         it = 0
         while True:
             time.sleep(3)
