@@ -91,7 +91,7 @@ class Manager(multiprocessing.Process):
                 result = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
                 if result.status_code == 200:
                     last_offer_id = None
-                    print("queue putting")
+                    print(f"queue putting {len(result.json()['result']['items'])}")
                     for item in result.json()['result']['items']:
                         offer_id = item['offer_id']
                         self.putQueue.put([1, client.username, offer_id])
