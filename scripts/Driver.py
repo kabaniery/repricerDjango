@@ -41,7 +41,7 @@ def get_options():
 def get_driver():
     # service = Service('/usr/bin/chromedriver')
     windows_path = "C:/Program Files/Google/Chrome Beta/Application/chrome.exe"
-    ubuntu_path = "/usr/bin/google-chrome-beta"
+    ubuntu_path = "/usr/bin/google-chrome"
     driver_path = "/usr/bin/chromedriver"
     current_driver = undetected_chromedriver.Chrome(headless=False, browser_executable_path=ubuntu_path, driver_executable_path=driver_path)
     return current_driver
