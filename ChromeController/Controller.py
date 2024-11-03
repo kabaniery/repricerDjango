@@ -96,6 +96,7 @@ class SeleniumManager(threading.Thread):
 
     def create_driver(self):
         with SeleniumManager.lock:
+            print("starting driver")
             self.driver = get_driver()
 
     def run(self):
