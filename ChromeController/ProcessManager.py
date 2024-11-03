@@ -72,6 +72,7 @@ class Manager(multiprocessing.Process):
 
             message = self.broker.rpop("parser")
             if message is not None:
+                print("broker getted")
                 message = message.decode("utf-8")
                 client = self.manager.session.query(Client).filter(Client.username == message).first()
                 # client = execute_async(Client.get, username=message)
@@ -90,6 +91,7 @@ class Manager(multiprocessing.Process):
                 result = get_request("https://api-seller.ozon.ru/v2/product/list", headers, body)
                 if result.status_code == 200:
                     last_offer_id = None
+                    print("queue putting")
                     for item in result.json()['result']['items']:
                         offer_id = item['offer_id']
                         self.putQueue.put([1, client.username, offer_id])

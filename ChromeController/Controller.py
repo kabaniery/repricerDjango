@@ -158,6 +158,7 @@ class SeleniumManager(threading.Thread):
                 except Exception as e:
                     self.logger.error(f"Can't process force queue on page {self.driver.current_url}")
             elif command == 1:
+                print("queue getted")
                 if client.last_product == data:
                     client.product_blocked = False
                     time.sleep(3)

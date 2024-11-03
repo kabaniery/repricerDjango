@@ -128,7 +128,7 @@ def load_from_ozon(request):
         Product.objects.filter(shop=client).update(to_removal=True)
         broker: Redis = apps.get_app_config('repricer').broker
         broker.lpush("parser", client.username)
-
+        print("broker pushed")
         return HttpResponse("Success", status=200)
     else:
         return HttpResponse("You are already added", status=400)
