@@ -19,7 +19,7 @@ from scripts.LanguageAdapting import generate_ozon_name
 
 
 class SeleniumManager(threading.Thread):
-    lock = multiprocessing.Lock()
+    lock = threading.Lock()
     iterator = 0
 
     def __init__(self, data_queue, process_it):
@@ -95,26 +95,7 @@ class SeleniumManager(threading.Thread):
         return price
 
     def create_driver(self):
-        # Копипаста из Driver
-        options = ChromeOptions()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        from random import randint
-        port = randint(9000, 9999)
-        options.add_argument(f"--remote-debugging-port={self.process_it + 9000}")
-        options.add_argument("--window-size=1920x1080")
-        options.add_argument("--start-maximized")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument(
-            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/91.0.4472.124 Safari/537.36")
-        options.add_argument("--disable-software-rasterizer")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument("--enable-javascript")
         with SeleniumManager.lock:
-            # service = Service('/usr/bin/chromedriver')
             self.driver = get_driver()
 
     def run(self):
