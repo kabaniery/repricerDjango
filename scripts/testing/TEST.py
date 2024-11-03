@@ -1,11 +1,15 @@
 import re
+import sys
 
 import requests
 from lxml import etree
 from pyvirtualdisplay import Display
 from selenium import webdriver
 
+from ChromeController.orm.AlchemyManager import AlchemyManager
+from ChromeController.orm.alchemy_models import Product
 from scripts.Driver import get_code, get_driver
+from scripts.LanguageAdapting import generate_ozon_name
 
 
 def get_products():
@@ -114,5 +118,16 @@ def display_product(client_id, api_key, offer_id):
     print(response.text)
 
 
+def get_url(name, sku):
+    print(generate_ozon_name(name, sku))
+
+
 if __name__ == '__main__':
-    display_product("1590790", "88f2b763-3566-484e-a402-fcbb5daee5fb", "400t")
+    sys.stdout.reconfigure(encoding='utf-8')
+
+    get_url("Искатель с красной точкой Sky-Watcher, с двумя креплениями", "1539568547")
+    display_product("1590790", "f8d5188f-cbcc-4378-b23f-9178b4489ff1", "67882")
+    manager = AlchemyManager()
+    product = manager.session.query(Product).filter(Product.offer_id == "67882").first()
+
+    print(product.price) #14990

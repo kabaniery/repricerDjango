@@ -1,7 +1,7 @@
 tortoise_config = {
     "connections": {
         "default": {
-            "engine": "orm.backends.postgresql",
+            "engine": "tortoise.backends.postgresql",
             "credentials": {
                 "host": "127.0.0.1",
                 "port": 5432,

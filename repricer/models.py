@@ -21,6 +21,7 @@ class Product(models.Model):
 
     offer_id = models.CharField(max_length=20)
     name = models.CharField(max_length=100, null=True)
+    sku = models.CharField(max_length=50, null=True)
 
     price = models.IntegerField()
     needed_price = models.IntegerField(null=True)

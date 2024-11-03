@@ -1,5 +1,4 @@
 import json
-import logging
 
 import openpyxl
 from django.apps import apps
@@ -7,18 +6,13 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
-from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from redis import Redis
 
 from repricer.forms import LoginForm, RegisterForm
 from repricer.models import Client, Product
-from scripts.Driver import get_request
 from scripts.ShopInfo import check_shop_info
-
-
-
 
 
 # Create your views here.
@@ -26,11 +20,15 @@ from scripts.ShopInfo import check_shop_info
 def start_page(request):
     client = request.user
     assert isinstance(client, Client)
+    if client.shop_name is None:
+        shop_name = client.username
+    else:
+        shop_name = client.shop_name
     try:
-        return render(request, 'index.html', {'avatar_path': client.shop_avatar.url, 'shop_name': client.shop_name})
+        return render(request, 'index.html', {'avatar_path': client.shop_avatar.url, 'shop_name': shop_name})
     except ValueError:
         return render(request, 'index.html', {'avatar_path': '',
-                                              'shop_name': client.shop_name})  # TODO: Проставить путь к статическому аватару
+                                              'shop_name': shop_name})  # TODO: Проставить путь к статическому аватару
 
 
 def register_view(request):
@@ -41,14 +39,19 @@ def register_view(request):
 
         if check_shop_info(client_id, api_key):
             new_password = make_password(api_key)
-            new_client = Client(username=client_id, password=new_password, api_key=api_key)
-            new_client.save()
-            login(request, new_client)
+            if not Client.objects.filter(username=client_id):
+                new_client = Client(username=client_id, password=new_password, api_key=api_key)
+                new_client.save()
+                login(request, new_client)
 
-            broker: Redis = apps.get_app_config("repricer").repricer
-            broker.lpush("register", f"{client_id};{shop_url}")
+                if shop_url is not None and shop_url != "":
+                    broker: Redis = apps.get_app_config("repricer").broker
+                    broker.lpush("register", f"{client_id};{shop_url}")
 
-            return redirect('index')
+                return redirect('index')
+            else:
+                messages.error(request, "Пользователь уже существует")
+                return render(request, 'form_template.html', {'form': RegisterForm(), 'form_type': "Регистрация"})
         else:
             messages.error(request, "Данные магазина неверны")
             return render(request, 'form_template.html', {'form': RegisterForm(), 'form_type': "Регистрация"})
@@ -107,7 +110,7 @@ def change_price(request):
         if len(editing_orders.keys()) == 0:
             messages.warning(request, "Нет цен для замены")
         else:
-            broker: Redis = apps.get_app_config("repricer").repricer
+            broker: Redis = apps.get_app_config("repricer").broker
             broker.lpush("changer", f"{client.username};;{json.dumps(editing_orders)}")
     return redirect('get_data')
 
@@ -117,7 +120,7 @@ def load_from_ozon(request):
     client = request.user
     assert isinstance(client, Client)
 
-    if not client.product_blocked:
+    if True:#not client.product_blocked:
         client.product_blocked = True
         client.last_product = None
         client.save()
@@ -180,10 +183,10 @@ def load_from_file(request):
                 continue
             if product.price != price:
                 mass[offer_id] = [product.price, price]
-
+        print(f"Setted price for {len(updated_products)} products")
         Product.objects.bulk_update(updated_products, ['needed_price'])
-        broker: Redis = apps.get_app_config("repricer").repricer
-        broker.lpush("changing", f"{client.username};;{json.dumps(mass)}")
+        broker: Redis = apps.get_app_config("repricer").broker
+        broker.lpush("changer", f"{client.username};;{json.dumps(mass)}")
     return redirect('index')
 
 

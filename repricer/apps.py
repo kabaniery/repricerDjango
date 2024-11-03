@@ -1,9 +1,9 @@
 import atexit
-import logging
 
 import redis
 from django.apps import AppConfig
-from django.db import connection
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
 from redis import Redis
 
 
@@ -18,20 +18,11 @@ class RepricerConfig(AppConfig):
 
     def ready(self):
         self.broker = redis.StrictRedis(host='localhost', port=6379, db=0)
-
         atexit.register(self.shutdown)
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'repricer' AND table_name = 'repricer_client';")
-            if cursor.fetchone()[0] == 1:
-                # ≈сли таблица существует, выполн€ем обновление
-                from .models import Client, Product
-                try:
-                    Client.objects.update(product_blocked=False)
-                    Product.objects.update(is_updating=False)
-                except Exception:
-                    logging.getLogger("django").warning("Can't update")
+        post_migrate.connect(set_product_blocked_false, sender=self)
 
 
-
+@receiver(post_migrate)
+def set_product_blocked_false(sender, **kwargs):
+    from repricer.models import Client
+    Client.objects.update(product_blocked=False)
